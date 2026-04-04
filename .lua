@@ -7,7 +7,8 @@ local HttpService = game:GetService("HttpService")
 local placeId = game.PlaceId
 local currentJobId = game.JobId
 
--- GUI
+
+-- GUII
 local gui = Instance.new("ScreenGui")
 gui.Parent = player:WaitForChild("PlayerGui")
 
