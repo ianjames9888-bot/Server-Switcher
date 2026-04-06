@@ -14,8 +14,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 gui.ResetOnSpawn = false
 
 -- ✨ BUTTON
-local button = Instance.new("TextButton")
-button.Parent = gui
+local button = Instance.new("TextButton", gui)
 button.Size = UDim2.new(0,40,0,40)
 button.Position = UDim2.new(0,100,0,100)
 button.BackgroundColor3 = Color3.fromRGB(0,0,0)
@@ -27,7 +26,7 @@ button.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner",button).CornerRadius = UDim.new(1,0)
 
 -- FRAME
-local frame = Instance.new("Frame",gui)
+local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0,0,0,0)
 frame.Position = UDim2.new(0.5,0,0.5,0)
 frame.AnchorPoint = Vector2.new(0.5,0.5)
@@ -178,86 +177,72 @@ rejoinBtn.MouseButton1Click:Connect(function()
 	TeleportService:TeleportToPlaceInstance(placeId,currentJobId)
 end)
 
--- ESP SYSTEM
-local espEnabled=false
-local espObjects={}
+-- 🔥 ESP (INCLUDES YOU)
+local espEnabled = false
+local espLabels = {}
 
-local function hideESP()
-	for _,v in ipairs(espObjects) do
-		if v then
-			v.Enabled = false
-		end
+local function clearESP()
+	for _,v in pairs(espLabels) do
+		if v then v:Destroy() end
 	end
-end
-
-local function showESP()
-	for _,v in ipairs(espObjects) do
-		if v then
-			v.Enabled = true
-		end
-	end
+	espLabels = {}
 end
 
 local function createESP(plr)
-	local function setup(char)
-		local head=char:WaitForChild("Head")
+	local label = Instance.new("TextLabel")
+	label.Parent = gui
+	label.Size = UDim2.new(0,200,0,40)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.new(1,1,1)
+	label.TextStrokeTransparency = 0
+	label.TextScaled = true
 
-		local bb=Instance.new("BillboardGui")
-		bb.Parent=head
-		bb.Size=UDim2.new(0,120,0,40)
-		bb.StudsOffset=Vector3.new(0,2.5,0)
-		bb.AlwaysOnTop=true
+	espLabels[plr] = label
 
-		local name=Instance.new("TextLabel",bb)
-		name.Size=UDim2.new(1,0,0.5,0)
-		name.BackgroundTransparency=1
-		name.TextScaled=true
+	RunService.RenderStepped:Connect(function()
+		if not espEnabled then
+			label.Visible = false
+			return
+		end
 
-		local dist=Instance.new("TextLabel",bb)
-		dist.Size=UDim2.new(1,0,0.5,0)
-		dist.Position=UDim2.new(0,0,0.5,0)
-		dist.BackgroundTransparency=1
-		dist.TextScaled=true
+		if not player.Character then return end
+		local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
+		if not myRoot then return end
 
-		table.insert(espObjects,bb)
+		if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			local root = plr.Character.HumanoidRootPart
+			local pos = workspace.CurrentCamera:WorldToViewportPoint(root.Position)
+			local distance = (myRoot.Position - root.Position).Magnitude
 
-		RunService.RenderStepped:Connect(function()
-			if not espEnabled then return end
-			if not player.Character then return end
-
-			local myRoot=player.Character:FindFirstChild("HumanoidRootPart")
-			if not myRoot then return end
-
-			local distance=0
-			if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-				distance=(myRoot.Position-plr.Character.HumanoidRootPart.Position).Magnitude
-			end
-
-			name.Text=plr.Name
-			if plr==player then
-				dist.Text="YOU [0]"
+			if plr == player then
+				label.Text = plr.Name .. "\nYOU [0]"
 			else
-				dist.Text=math.floor(distance).." studs"
+				label.Text = plr.Name .. "\n" .. math.floor(distance).." studs"
 			end
-		end)
-	end
 
-	if plr.Character then setup(plr.Character) end
-	plr.CharacterAdded:Connect(setup)
+			label.Position = UDim2.new(0,pos.X-100,0,pos.Y-50)
+			label.Visible = true
+		else
+			label.Text = plr.Name .. "\n[Loading...]"
+			label.Position = UDim2.new(0,50,0,50)
+			label.Visible = true
+		end
+	end)
 end
 
 espToggle.MouseButton1Click:Connect(function()
 	espEnabled = not espEnabled
 
 	if espEnabled then
-		espToggle.Text="ESP: ON"
-		showESP()
+		espToggle.Text = "ESP: ON"
 		for _,p in ipairs(game.Players:GetPlayers()) do
-			createESP(p)
+			if not espLabels[p] then
+				createESP(p)
+			end
 		end
 	else
-		espToggle.Text="ESP: OFF"
-		hideESP()
+		espToggle.Text = "ESP: OFF"
+		clearESP()
 	end
 end)
 
