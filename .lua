@@ -1,309 +1,818 @@
-local player = game.Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local TeleportService = game:GetService("TeleportService")
-local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
+local P=game.Players.LocalPlayer
+local U=game:GetService("UserInputService")
+local T=game:GetService("TweenService")
+local TP=game:GetService("TeleportService")
+local H=game:GetService("HttpService")
+local R=game:GetService("RunService")
 
-local placeId = game.PlaceId
-local currentJobId = game.JobId
+local id=game.PlaceId
+local jid=game.JobId
+local gold=Color3.fromRGB(220,175,65)
 
--- GUI
-local gui = Instance.new("ScreenGui")
-gui.Parent = player:WaitForChild("PlayerGui")
-gui.ResetOnSpawn = false
+local G=Instance.new("ScreenGui",P:WaitForChild("PlayerGui"))
+G.Name="StelleHub"
+G.ResetOnSpawn=false
+G.IgnoreGuiInset=true
+G.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
 
+--------------------------------------------------
 -- ✨ BUTTON
-local button = Instance.new("TextButton", gui)
-button.Size = UDim2.new(0,40,0,40)
-button.Position = UDim2.new(0,100,0,100)
-button.BackgroundColor3 = Color3.fromRGB(0,0,0)
-button.BackgroundTransparency = 0.2
-button.Text = "✨"
-button.TextSize = 24
-button.Font = Enum.Font.GothamBold
-button.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner",button).CornerRadius = UDim.new(1,0)
+--------------------------------------------------
 
--- FRAME
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,0,0,0)
-frame.Position = UDim2.new(0.5,0,0.5,0)
-frame.AnchorPoint = Vector2.new(0.5,0.5)
-frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
-frame.BackgroundTransparency = 0.2
-frame.Visible = false
-Instance.new("UICorner",frame).CornerRadius = UDim.new(0,20)
+local B=Instance.new("TextButton",G)
+B.Size=UDim2.new(0,42,0,42)
+B.Position=UDim2.new(0,100,0,100)
+B.Text="✨"
+B.TextSize=23
+B.Font=Enum.Font.GothamBold
+B.TextColor3=gold
+B.BackgroundColor3=Color3.fromRGB(8,8,10)
+B.BackgroundTransparency=.08
+B.AutoButtonColor=false
+B.Active=true
+B.ZIndex=100
 
--- STYLE
-local function style(btn)
-	btn.BackgroundColor3 = Color3.fromRGB(0,0,0)
-	btn.TextColor3 = Color3.new(1,1,1)
-	btn.TextTransparency = 1
-	btn.BackgroundTransparency = 1
-	Instance.new("UICorner",btn)
+Instance.new("UICorner",B).CornerRadius=UDim.new(1,0)
+
+local BS=Instance.new("UIStroke",B)
+BS.Color=gold
+BS.Transparency=.45
+BS.Thickness=1
+
+--------------------------------------------------
+-- HUB
+--------------------------------------------------
+
+local F=Instance.new("Frame",G)
+F.Size=UDim2.new(0,0,0,0)
+F.Position=UDim2.new(.5,0,.5,0)
+F.AnchorPoint=Vector2.new(.5,.5)
+F.BackgroundColor3=Color3.fromRGB(7,7,9)
+F.BackgroundTransparency=.04
+F.Visible=false
+F.ZIndex=50
+
+Instance.new("UICorner",F).CornerRadius=UDim.new(0,18)
+
+local FS=Instance.new("UIStroke",F)
+FS.Color=gold
+FS.Transparency=.45
+FS.Thickness=1
+
+--------------------------------------------------
+-- BUTTON CREATOR
+--------------------------------------------------
+
+local function bt(t,y,w,h)
+	local b=Instance.new("TextButton",F)
+
+	b.Size=UDim2.new(0,w,0,h)
+	b.Position=UDim2.new(.5,-w/2,0,y)
+
+	b.Text=t
+	b.Font=Enum.Font.GothamMedium
+	b.TextSize=12
+	b.TextColor3=gold
+
+	b.BackgroundColor3=Color3.fromRGB(18,18,21)
+	b.BackgroundTransparency=.05
+
+	b.AutoButtonColor=false
+	b.ZIndex=55
+
+	Instance.new("UICorner",b).CornerRadius=UDim.new(0,9)
+
+	local s=Instance.new("UIStroke",b)
+	s.Color=gold
+	s.Transparency=.7
+	s.Thickness=1
+
+	return b
 end
 
--- SIDE BUTTONS
-local leftTop = Instance.new("TextButton",frame)
-leftTop.Size = UDim2.new(0,25,0,25)
-leftTop.Position = UDim2.new(0,-30,0,10)
-leftTop.Text = "🔄"
-style(leftTop)
+--------------------------------------------------
+-- TABS
+-- ONLY THESE TWO ARE BACK TO THEIR OLD POSITION
+--------------------------------------------------
 
-local leftBottom = Instance.new("TextButton",frame)
-leftBottom.Size = UDim2.new(0,25,0,25)
-leftBottom.Position = UDim2.new(0,-30,0,40)
-leftBottom.Text = "👀"
-style(leftBottom)
+local back=Instance.new("TextButton",F)
+back.Size=UDim2.new(0,27,0,27)
+back.Position=UDim2.new(.5,-160,.5,-95)
+back.Text="🔄"
+back.Font=Enum.Font.GothamMedium
+back.TextSize=12
+back.TextColor3=gold
+back.BackgroundColor3=Color3.fromRGB(18,18,21)
+back.BackgroundTransparency=.05
+back.AutoButtonColor=false
+back.ZIndex=55
 
+Instance.new("UICorner",back).CornerRadius=UDim.new(0,9)
+
+local backStroke=Instance.new("UIStroke",back)
+backStroke.Color=gold
+backStroke.Transparency=.7
+
+local eye=Instance.new("TextButton",F)
+eye.Size=UDim2.new(0,27,0,27)
+eye.Position=UDim2.new(.5,-160,.5,-62)
+eye.Text="👀"
+eye.Font=Enum.Font.GothamMedium
+eye.TextSize=12
+eye.TextColor3=gold
+eye.BackgroundColor3=Color3.fromRGB(18,18,21)
+eye.BackgroundTransparency=.05
+eye.AutoButtonColor=false
+eye.ZIndex=55
+
+Instance.new("UICorner",eye).CornerRadius=UDim.new(0,9)
+
+local eyeStroke=Instance.new("UIStroke",eye)
+eyeStroke.Color=gold
+eyeStroke.Transparency=.7
+
+--------------------------------------------------
 -- TITLE
-local title = Instance.new("TextLabel",frame)
-title.Size = UDim2.new(1,-10,0,25)
-title.Position = UDim2.new(0,0,0,5)
-title.BackgroundTransparency = 1
-title.Text = "Stelle Hub"
-title.TextColor3 = Color3.fromRGB(170,0,255)
-title.Font = Enum.Font.Garamond
-title.TextSize = 18
-title.TextXAlignment = Enum.TextXAlignment.Right
-title.TextTransparency = 1
+--------------------------------------------------
 
--- CREDIT
-local credit = Instance.new("TextLabel",frame)
-credit.Size = UDim2.new(1,-10,0,20)
-credit.Position = UDim2.new(0,5,1,-25)
-credit.BackgroundTransparency = 1
-credit.Text = "by Ian James"
-credit.TextColor3 = Color3.fromRGB(200,200,200)
-credit.Font = Enum.Font.Garamond
-credit.TextSize = 12
-credit.TextXAlignment = Enum.TextXAlignment.Left
-credit.TextTransparency = 1
+local title=Instance.new("TextLabel",F)
+title.Size=UDim2.new(1,-20,0,28)
+title.Position=UDim2.new(0,10,0,7)
+title.Text="Stelle Hub"
+title.TextColor3=gold
+title.Font=Enum.Font.Garamond
+title.TextSize=19
+title.BackgroundTransparency=1
+title.TextXAlignment=Enum.TextXAlignment.Right
+title.ZIndex=55
 
--- MAIN BUTTONS
-local switchBtn = Instance.new("TextButton",frame)
-switchBtn.Size = UDim2.new(0,100,0,35)
-switchBtn.Position = UDim2.new(0.5,-50,0.4,-17)
-switchBtn.Text = "Switch"
-style(switchBtn)
+local credit=Instance.new("TextLabel",F)
+credit.Size=UDim2.new(1,-20,0,20)
+credit.Position=UDim2.new(0,10,1,-27)
+credit.Text="by Ian James"
+credit.TextColor3=Color3.fromRGB(150,150,155)
+credit.Font=Enum.Font.Garamond
+credit.TextSize=12
+credit.BackgroundTransparency=1
+credit.ZIndex=55
 
-local rejoinBtn = Instance.new("TextButton",frame)
-rejoinBtn.Size = UDim2.new(0,100,0,35)
-rejoinBtn.Position = UDim2.new(0.5,-50,0.65,-17)
-rejoinBtn.Text = "Rejoin"
-style(rejoinBtn)
+--------------------------------------------------
+-- MAIN TAB
+--------------------------------------------------
 
-local espToggle = Instance.new("TextButton",frame)
-espToggle.Size = UDim2.new(0,120,0,40)
-espToggle.Position = UDim2.new(0.5,-60,0.5,-20)
-espToggle.Text = "ESP: OFF"
-espToggle.Visible = false
-style(espToggle)
+local sw=bt("Switch",75,110,35)
+local rj=bt("Rejoin",120,110,35)
 
--- FADE SYSTEM
-local buttons = {switchBtn,rejoinBtn,leftTop,leftBottom,espToggle}
-local texts = {title,credit}
+--------------------------------------------------
+-- 👀 TAB
+-- CENTERED + STACKED
+--------------------------------------------------
 
-local function fadeIn()
-	for _,b in ipairs(buttons) do
-		TweenService:Create(b,TweenInfo.new(0.25),{
-			TextTransparency=0,
-			BackgroundTransparency=0
-		}):Play()
+local esp=bt("ESP: OFF",55,130,36)
+esp.Visible=false
+
+local st=Instance.new("TextLabel",F)
+st.Size=UDim2.new(0,150,0,22)
+st.Position=UDim2.new(.5,-75,0,100)
+st.Text="EDIT SPEED"
+st.TextColor3=gold
+st.Font=Enum.Font.GothamMedium
+st.TextSize=13
+st.BackgroundTransparency=1
+st.Visible=false
+st.ZIndex=55
+
+local sb=Instance.new("TextBox",F)
+sb.Size=UDim2.new(0,130,0,34)
+sb.Position=UDim2.new(.5,-65,0,123)
+sb.PlaceholderText="Enter speed"
+sb.PlaceholderColor3=Color3.fromRGB(100,100,105)
+sb.Text=""
+sb.TextColor3=gold
+sb.TextSize=13
+sb.Font=Enum.Font.Gotham
+sb.BackgroundColor3=Color3.fromRGB(15,15,18)
+sb.BackgroundTransparency=.05
+sb.ClearTextOnFocus=false
+sb.TextXAlignment=Enum.TextXAlignment.Center
+sb.Visible=false
+sb.ZIndex=55
+
+Instance.new("UICorner",sb).CornerRadius=UDim.new(0,9)
+
+local ss=Instance.new("UIStroke",sb)
+ss.Color=gold
+ss.Transparency=.65
+
+local sp=bt("Speed: OFF",164,130,34)
+sp.Visible=false
+
+--------------------------------------------------
+-- TWEEN
+--------------------------------------------------
+
+local function tw(o,p,t)
+	T:Create(
+		o,
+		TweenInfo.new(
+			t or .2,
+			Enum.EasingStyle.Quad,
+			Enum.EasingDirection.Out
+		),
+		p
+	):Play()
+end
+
+local function fade(v,a,t)
+	local p={
+		TextTransparency=a
+	}
+
+	if v:IsA("TextButton") or v:IsA("TextBox") then
+		p.BackgroundTransparency=a==1 and 1 or .05
 	end
-	for _,t in ipairs(texts) do
-		TweenService:Create(t,TweenInfo.new(0.25),{
-			TextTransparency=0
-		}):Play()
+
+	tw(v,p,t or .18)
+end
+
+--------------------------------------------------
+-- TABS
+--------------------------------------------------
+
+local tab="main"
+
+local function main()
+	tab="main"
+
+	sw.Visible=true
+	rj.Visible=true
+
+	esp.Visible=false
+	st.Visible=false
+	sb.Visible=false
+	sp.Visible=false
+
+	for _,v in ipairs({
+		title,
+		credit,
+		back,
+		eye,
+		sw,
+		rj
+	}) do
+		fade(v,0,.18)
 	end
 end
 
-local function fadeOut()
-	for _,b in ipairs(buttons) do
-		TweenService:Create(b,TweenInfo.new(0.25),{
-			TextTransparency=1,
-			BackgroundTransparency=1
-		}):Play()
-	end
-	for _,t in ipairs(texts) do
-		TweenService:Create(t,TweenInfo.new(0.25),{
-			TextTransparency=1
-		}):Play()
+local function eyes()
+	tab="eyes"
+
+	sw.Visible=false
+	rj.Visible=false
+
+	esp.Visible=true
+	st.Visible=true
+	sb.Visible=true
+	sp.Visible=true
+
+	for _,v in ipairs({
+		title,
+		credit,
+		back,
+		eye,
+		esp,
+		st,
+		sb,
+		sp
+	}) do
+		fade(v,0,.18)
 	end
 end
 
--- TAB SWITCH
-leftBottom.MouseButton1Click:Connect(function()
-	switchBtn.Visible=false
-	rejoinBtn.Visible=false
-	espToggle.Visible=true
-	fadeIn()
-end)
+back.MouseButton1Click:Connect(main)
+eye.MouseButton1Click:Connect(eyes)
 
-leftTop.MouseButton1Click:Connect(function()
-	switchBtn.Visible=true
-	rejoinBtn.Visible=true
-	espToggle.Visible=false
-	fadeIn()
-end)
+--------------------------------------------------
+-- SWITCH SERVER
+--------------------------------------------------
 
--- SERVER SWITCH
-switchBtn.MouseButton1Click:Connect(function()
-	local servers={}
-	local success,data=pcall(function()
-		return HttpService:JSONDecode(
-			game:HttpGet("https://games.roblox.com/v1/games/"..placeId.."/servers/Public?limit=100")
-		)
-	end)
+sw.MouseButton1Click:Connect(function()
 
-	if success and data and data.data then
-		for _,v in ipairs(data.data) do
-			if v.id ~= currentJobId then
-				table.insert(servers,v.id)
-			end
-		end
-	end
+	local s={}
 
-	if #servers > 0 then
-		local randomId = servers[math.random(1,#servers)]
-		TeleportService:TeleportToPlaceInstance(placeId,randomId)
-	else
-		TeleportService:Teleport(placeId)
-	end
-end)
+	local ok,d=pcall(function()
 
-rejoinBtn.MouseButton1Click:Connect(function()
-	TeleportService:TeleportToPlaceInstance(placeId,currentJobId)
-end)
-
--- 🔥 ESP (INCLUDES YOU)
-local espEnabled = false
-local espLabels = {}
-
-local function clearESP()
-	for _,v in pairs(espLabels) do
-		if v then v:Destroy() end
-	end
-	espLabels = {}
-end
-
-local function createESP(plr)
-	local label = Instance.new("TextLabel")
-	label.Parent = gui
-	label.Size = UDim2.new(0,200,0,40)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.new(1,1,1)
-	label.TextStrokeTransparency = 0
-	label.TextScaled = true
-
-	espLabels[plr] = label
-
-	RunService.RenderStepped:Connect(function()
-		if not espEnabled then
-			label.Visible = false
-			return
-		end
-
-		if not player.Character then return end
-		local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
-		if not myRoot then return end
-
-		if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-			local root = plr.Character.HumanoidRootPart
-			local pos = workspace.CurrentCamera:WorldToViewportPoint(root.Position)
-			local distance = (myRoot.Position - root.Position).Magnitude
-
-			if plr == player then
-				label.Text = plr.Name .. "\nYOU [0]"
-			else
-				label.Text = plr.Name .. "\n" .. math.floor(distance).." studs"
-			end
-
-			label.Position = UDim2.new(0,pos.X-100,0,pos.Y-50)
-			label.Visible = true
-		else
-			label.Text = plr.Name .. "\n[Loading...]"
-			label.Position = UDim2.new(0,50,0,50)
-			label.Visible = true
-		end
-	end)
-end
-
-espToggle.MouseButton1Click:Connect(function()
-	espEnabled = not espEnabled
-
-	if espEnabled then
-		espToggle.Text = "ESP: ON"
-		for _,p in ipairs(game.Players:GetPlayers()) do
-			if not espLabels[p] then
-				createESP(p)
-			end
-		end
-	else
-		espToggle.Text = "ESP: OFF"
-		clearESP()
-	end
-end)
-
--- OPEN/CLOSE
-local opened=false
-button.MouseButton1Click:Connect(function()
-	if not opened then
-		frame.Visible=true
-		TweenService:Create(frame,TweenInfo.new(0.25),{
-			Size=UDim2.new(0,260,0,180)
-		}):Play()
-		task.delay(0.25,fadeIn)
-		opened=true
-	else
-		fadeOut()
-		task.wait(0.25)
-		TweenService:Create(frame,TweenInfo.new(0.25),{
-			Size=UDim2.new(0,0,0,0)
-		}):Play()
-		task.wait(0.25)
-		frame.Visible=false
-		opened=false
-	end
-end)
-
--- DRAG SYSTEM
-local function makeDraggable(obj)
-	local dragging=false
-	local dragInput,startPos,startObjPos
-
-	obj.InputBegan:Connect(function(input)
-		if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-			dragging=true
-			startPos=input.Position
-			startObjPos=obj.Position
-			input.Changed:Connect(function()
-				if input.UserInputState==Enum.UserInputState.End then
-					dragging=false
-				end
-			end)
-		end
-	end)
-
-	obj.InputChanged:Connect(function(input)
-		if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
-			dragInput=input
-		end
-	end)
-
-	UIS.InputChanged:Connect(function(input)
-		if dragging and input==dragInput then
-			local delta=input.Position-startPos
-			obj.Position=UDim2.new(
-				startObjPos.X.Scale,
-				startObjPos.X.Offset+delta.X,
-				startObjPos.Y.Scale,
-				startObjPos.Y.Offset+delta.Y
+		return H:JSONDecode(
+			game:HttpGet(
+				"https://games.roblox.com/v1/games/"
+				..id..
+				"/servers/Public?limit=100"
 			)
-		end
+		)
+
 	end)
+
+	if ok and d and d.data then
+
+		for _,v in ipairs(d.data) do
+
+			if v.id~=jid then
+				table.insert(s,v.id)
+			end
+
+		end
+
+	end
+
+	if #s>0 then
+
+		TP:TeleportToPlaceInstance(
+			id,
+			s[math.random(1,#s)]
+		)
+
+	else
+
+		TP:Teleport(id)
+
+	end
+
+end)
+
+--------------------------------------------------
+-- REJOIN
+--------------------------------------------------
+
+rj.MouseButton1Click:Connect(function()
+
+	TP:TeleportToPlaceInstance(
+		id,
+		jid
+	)
+
+end)
+
+--------------------------------------------------
+-- ESP
+--------------------------------------------------
+
+local eo=false
+local labels={}
+local connections={}
+
+local function removeESP(p)
+
+	if labels[p] then
+		labels[p]:Destroy()
+		labels[p]=nil
+	end
+
+	if connections[p] then
+		connections[p]:Disconnect()
+		connections[p]=nil
+	end
+
 end
 
-makeDraggable(button)
-makeDraggable(frame)
+local function clear()
+
+	for p in pairs(labels) do
+		removeESP(p)
+	end
+
+end
+
+local function add(p)
+
+	if labels[p] then
+		return
+	end
+
+	local l=Instance.new("TextLabel",G)
+
+	l.Name="ESP_"..p.Name
+	l.Size=UDim2.new(0,200,0,40)
+
+	l.BackgroundTransparency=1
+
+	l.TextColor3=gold
+	l.TextStrokeColor3=Color3.new(0,0,0)
+	l.TextStrokeTransparency=0
+
+	l.TextScaled=true
+	l.Font=Enum.Font.GothamMedium
+
+	l.ZIndex=20
+	l.Visible=false
+
+	labels[p]=l
+
+	connections[p]=R.RenderStepped:Connect(function()
+
+		if not eo or not p.Parent then
+
+			l.Visible=false
+			return
+
+		end
+
+		local c=p.Character
+		local me=P.Character
+		local cam=workspace.CurrentCamera
+
+		if not c or not me or not cam then
+
+			l.Visible=false
+			return
+
+		end
+
+		local root=c:FindFirstChild("HumanoidRootPart")
+		local my=me:FindFirstChild("HumanoidRootPart")
+
+		if not root or not my then
+
+			l.Visible=false
+			return
+
+		end
+
+		local pos,on=
+			cam:WorldToViewportPoint(root.Position)
+
+		if on and pos.Z>0 then
+
+			local d=math.floor(
+				(my.Position-root.Position).Magnitude
+			)
+
+			l.Text=
+				p.Name..
+				(
+					p==P
+					and "\nYOU [0]"
+					or "\n"..d.." studs"
+				)
+
+			l.Position=UDim2.new(
+				0,
+				pos.X-100,
+				0,
+				pos.Y-50
+			)
+
+			l.Visible=true
+
+		else
+
+			l.Visible=false
+
+		end
+
+	end)
+
+end
+
+esp.MouseButton1Click:Connect(function()
+
+	eo=not eo
+
+	if eo then
+
+		esp.Text="ESP: ON"
+
+		for _,p in ipairs(game.Players:GetPlayers()) do
+			add(p)
+		end
+
+		tw(
+			esp,
+			{
+				BackgroundColor3=
+					Color3.fromRGB(45,35,15)
+			},
+			.2
+		)
+
+	else
+
+		esp.Text="ESP: OFF"
+
+		clear()
+
+		tw(
+			esp,
+			{
+				BackgroundColor3=
+					Color3.fromRGB(18,18,21)
+			},
+			.2
+		)
+
+	end
+
+end)
+
+game.Players.PlayerAdded:Connect(function(p)
+
+	if eo then
+		add(p)
+	end
+
+end)
+
+game.Players.PlayerRemoving:Connect(function(p)
+
+	removeESP(p)
+
+end)
+
+--------------------------------------------------
+-- SPEED
+--------------------------------------------------
+
+local se=false
+local speed=16
+local old=nil
+
+sb.FocusLost:Connect(function()
+
+	local n=tonumber(sb.Text)
+
+	if n then
+
+		speed=math.clamp(n,1,500)
+		sb.Text=tostring(speed)
+
+	else
+
+		sb.Text=tostring(speed)
+
+	end
+
+end)
+
+sp.MouseButton1Click:Connect(function()
+
+	local n=tonumber(sb.Text)
+
+	if n then
+
+		speed=math.clamp(n,1,500)
+		sb.Text=tostring(speed)
+
+	end
+
+	local h=
+		P.Character
+		and P.Character:FindFirstChildOfClass("Humanoid")
+
+	if not se then
+
+		old=h and h.WalkSpeed or 16
+
+		se=true
+		sp.Text="Speed: ON"
+
+		tw(
+			sp,
+			{
+				BackgroundColor3=
+					Color3.fromRGB(45,35,15)
+			},
+			.2
+		)
+
+	else
+
+		se=false
+
+		if h and old then
+			h.WalkSpeed=old
+		end
+
+		sp.Text="Speed: OFF"
+
+		tw(
+			sp,
+			{
+				BackgroundColor3=
+					Color3.fromRGB(18,18,21)
+			},
+			.2
+		)
+
+		old=nil
+
+	end
+
+end)
+
+R.Heartbeat:Connect(function()
+
+	if not se then
+		return
+	end
+
+	local c=P.Character
+	local h=
+		c and c:FindFirstChildOfClass("Humanoid")
+
+	if h then
+		h.WalkSpeed=speed
+	end
+
+end)
+
+P.CharacterAdded:Connect(function(c)
+
+	local h=c:WaitForChild("Humanoid",5)
+
+	if h and se then
+
+		old=h.WalkSpeed
+		h.WalkSpeed=speed
+
+	end
+
+end)
+
+--------------------------------------------------
+-- OPEN / CLOSE
+--------------------------------------------------
+
+local open=false
+local busy=false
+
+B.MouseButton1Click:Connect(function()
+
+	if busy then
+		return
+	end
+
+	busy=true
+
+	if not open then
+
+		F.Visible=true
+		F.Size=UDim2.new(0,0,0,0)
+
+		for _,v in ipairs({
+			title,
+			credit,
+			back,
+			eye,
+			sw,
+			rj,
+			esp,
+			st,
+			sb,
+			sp
+		}) do
+
+			v.TextTransparency=1
+
+			if v:IsA("TextButton")
+				or v:IsA("TextBox") then
+
+				v.BackgroundTransparency=1
+
+			end
+
+		end
+
+		tw(
+			F,
+			{
+				Size=UDim2.new(0,260,0,220)
+			},
+			.3
+		)
+
+		task.wait(.12)
+
+		if tab=="main" then
+			main()
+		else
+			eyes()
+		end
+
+		open=true
+
+	else
+
+		for _,v in ipairs({
+			title,
+			credit,
+			back,
+			eye,
+			sw,
+			rj,
+			esp,
+			st,
+			sb,
+			sp
+		}) do
+
+			fade(v,1,.12)
+
+		end
+
+		task.wait(.14)
+
+		tw(
+			F,
+			{
+				Size=UDim2.new(0,0,0,0)
+			},
+			.28
+		)
+
+		task.wait(.28)
+
+		F.Visible=false
+		open=false
+
+	end
+
+	busy=false
+
+end)
+
+--------------------------------------------------
+-- DRAG
+--------------------------------------------------
+
+local function drag(o)
+
+	local d=false
+	local start
+	local pos
+	local move
+
+	o.InputBegan:Connect(function(i)
+
+		if i.UserInputType==
+			Enum.UserInputType.Touch
+			or i.UserInputType==
+			Enum.UserInputType.MouseButton1 then
+
+			d=true
+			start=i.Position
+			pos=o.Position
+
+			if move then
+				move:Disconnect()
+			end
+
+			move=U.InputChanged:Connect(function(x)
+
+				if not d then
+					return
+				end
+
+				if x.UserInputType==
+					Enum.UserInputType.Touch
+					or x.UserInputType==
+					Enum.UserInputType.MouseMovement then
+
+					local z=x.Position-start
+
+					o.Position=UDim2.new(
+						pos.X.Scale,
+						pos.X.Offset+z.X,
+						pos.Y.Scale,
+						pos.Y.Offset+z.Y
+					)
+
+				end
+
+			end)
+
+			i.Changed:Connect(function()
+
+				if i.UserInputState==
+					Enum.UserInputState.End then
+
+					d=false
+
+					if move then
+						move:Disconnect()
+						move=nil
+					end
+
+				end
+
+			end)
+
+		end
+
+	end)
+
+end
+
+drag(B)
+drag(F)
+
+B.Visible=true
+B.Active=true
