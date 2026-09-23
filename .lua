@@ -4,10 +4,15 @@ local T=game:GetService("TweenService")
 local TP=game:GetService("TeleportService")
 local H=game:GetService("HttpService")
 local R=game:GetService("RunService")
+local L=game:GetService("Lighting")
 
 local id=game.PlaceId
 local jid=game.JobId
 local gold=Color3.fromRGB(220,175,65)
+
+--------------------------------------------------
+-- GUI
+--------------------------------------------------
 
 local G=Instance.new("ScreenGui",P:WaitForChild("PlayerGui"))
 G.Name="StelleHub"
@@ -60,7 +65,7 @@ FS.Transparency=.45
 FS.Thickness=1
 
 --------------------------------------------------
--- BUTTON CREATOR
+-- NORMAL BUTTON CREATOR
 --------------------------------------------------
 
 local function bt(t,y,w,h)
@@ -73,10 +78,8 @@ local function bt(t,y,w,h)
 	b.Font=Enum.Font.GothamMedium
 	b.TextSize=12
 	b.TextColor3=gold
-
 	b.BackgroundColor3=Color3.fromRGB(18,18,21)
 	b.BackgroundTransparency=.05
-
 	b.AutoButtonColor=false
 	b.ZIndex=55
 
@@ -91,10 +94,10 @@ local function bt(t,y,w,h)
 end
 
 --------------------------------------------------
--- TABS
--- ONLY THESE TWO ARE BACK TO THEIR OLD POSITION
+-- SIDE TAB BUTTONS
 --------------------------------------------------
 
+-- 🔄 OLD POSITION
 local back=Instance.new("TextButton",F)
 back.Size=UDim2.new(0,27,0,27)
 back.Position=UDim2.new(.5,-160,.5,-95)
@@ -113,6 +116,7 @@ local backStroke=Instance.new("UIStroke",back)
 backStroke.Color=gold
 backStroke.Transparency=.7
 
+-- 👀 OLD POSITION
 local eye=Instance.new("TextButton",F)
 eye.Size=UDim2.new(0,27,0,27)
 eye.Position=UDim2.new(.5,-160,.5,-62)
@@ -130,6 +134,29 @@ Instance.new("UICorner",eye).CornerRadius=UDim.new(0,9)
 local eyeStroke=Instance.new("UIStroke",eye)
 eyeStroke.Color=gold
 eyeStroke.Transparency=.7
+
+--------------------------------------------------
+-- ⚡ FAST MODE SIDE BUTTON
+-- DIRECTLY BELOW 👀
+--------------------------------------------------
+
+local fastTab=Instance.new("TextButton",F)
+fastTab.Size=UDim2.new(0,27,0,27)
+fastTab.Position=UDim2.new(.5,-160,.5,-29)
+fastTab.Text="⚡"
+fastTab.Font=Enum.Font.GothamMedium
+fastTab.TextSize=12
+fastTab.TextColor3=gold
+fastTab.BackgroundColor3=Color3.fromRGB(18,18,21)
+fastTab.BackgroundTransparency=.05
+fastTab.AutoButtonColor=false
+fastTab.ZIndex=55
+
+Instance.new("UICorner",fastTab).CornerRadius=UDim.new(0,9)
+
+local fastTabStroke=Instance.new("UIStroke",fastTab)
+fastTabStroke.Color=gold
+fastTabStroke.Transparency=.7
 
 --------------------------------------------------
 -- TITLE
@@ -165,7 +192,6 @@ local rj=bt("Rejoin",120,110,35)
 
 --------------------------------------------------
 -- 👀 TAB
--- CENTERED + STACKED
 --------------------------------------------------
 
 local esp=bt("ESP: OFF",55,130,36)
@@ -208,6 +234,29 @@ local sp=bt("Speed: OFF",164,130,34)
 sp.Visible=false
 
 --------------------------------------------------
+-- FAST MODE CENTER BUTTON
+--------------------------------------------------
+
+local fastButton=Instance.new("TextButton",F)
+fastButton.Size=UDim2.new(0,140,0,40)
+fastButton.Position=UDim2.new(.5,-70,.5,-20)
+fastButton.Text="FAST MODE: OFF"
+fastButton.Font=Enum.Font.GothamMedium
+fastButton.TextSize=12
+fastButton.TextColor3=gold
+fastButton.BackgroundColor3=Color3.fromRGB(18,18,21)
+fastButton.BackgroundTransparency=.05
+fastButton.AutoButtonColor=false
+fastButton.Visible=false
+fastButton.ZIndex=60
+
+Instance.new("UICorner",fastButton).CornerRadius=UDim.new(0,10)
+
+local fastStroke=Instance.new("UIStroke",fastButton)
+fastStroke.Color=gold
+fastStroke.Transparency=.65
+
+--------------------------------------------------
 -- TWEEN
 --------------------------------------------------
 
@@ -236,13 +285,31 @@ local function fade(v,a,t)
 end
 
 --------------------------------------------------
--- TABS
+-- TAB STATE
 --------------------------------------------------
 
 local tab="main"
 
+local function hideNormal()
+	sw.Visible=false
+	rj.Visible=false
+
+	esp.Visible=false
+	st.Visible=false
+	sb.Visible=false
+	sp.Visible=false
+end
+
 local function main()
 	tab="main"
+
+	if fastTab:GetAttribute("FastPage") then
+		fastButton.Visible=true
+		hideNormal()
+		return
+	end
+
+	fastButton.Visible=false
 
 	sw.Visible=true
 	rj.Visible=true
@@ -257,6 +324,7 @@ local function main()
 		credit,
 		back,
 		eye,
+		fastTab,
 		sw,
 		rj
 	}) do
@@ -266,6 +334,14 @@ end
 
 local function eyes()
 	tab="eyes"
+
+	if fastTab:GetAttribute("FastPage") then
+		fastButton.Visible=true
+		hideNormal()
+		return
+	end
+
+	fastButton.Visible=false
 
 	sw.Visible=false
 	rj.Visible=false
@@ -280,6 +356,7 @@ local function eyes()
 		credit,
 		back,
 		eye,
+		fastTab,
 		esp,
 		st,
 		sb,
@@ -289,8 +366,52 @@ local function eyes()
 	end
 end
 
-back.MouseButton1Click:Connect(main)
-eye.MouseButton1Click:Connect(eyes)
+--------------------------------------------------
+-- FAST PAGE
+--------------------------------------------------
+
+local function fastPage()
+
+	fastTab:SetAttribute("FastPage",true)
+
+	sw.Visible=false
+	rj.Visible=false
+
+	esp.Visible=false
+	st.Visible=false
+	sb.Visible=false
+	sp.Visible=false
+
+	fastButton.Visible=true
+
+	for _,v in ipairs({
+		title,
+		credit,
+		back,
+		eye,
+		fastTab,
+		fastButton
+	}) do
+		fade(v,0,.18)
+	end
+
+end
+
+back.MouseButton1Click:Connect(function()
+
+	fastTab:SetAttribute("FastPage",false)
+	main()
+
+end)
+
+eye.MouseButton1Click:Connect(function()
+
+	fastTab:SetAttribute("FastPage",false)
+	eyes()
+
+end)
+
+fastTab.MouseButton1Click:Connect(fastPage)
 
 --------------------------------------------------
 -- SWITCH SERVER
@@ -638,6 +759,271 @@ P.CharacterAdded:Connect(function(c)
 end)
 
 --------------------------------------------------
+-- FAST MODE
+--------------------------------------------------
+
+local fastMode=false
+
+local savedTextures={}
+local savedEffects={}
+local savedLights={}
+local savedLightingEffects={}
+local savedSkyParent=nil
+
+local function saveTexture(obj)
+
+	if savedTextures[obj]~=nil then
+		return
+	end
+
+	if obj:IsA("Decal") or obj:IsA("Texture") then
+
+		savedTextures[obj]=obj.Transparency
+		obj.Transparency=1
+
+	end
+
+end
+
+local function saveEffect(obj)
+
+	if savedEffects[obj]~=nil then
+		return
+	end
+
+	if obj:IsA("ParticleEmitter")
+		or obj:IsA("Trail")
+		or obj:IsA("Beam")
+		or obj:IsA("Smoke")
+		or obj:IsA("Fire")
+		or obj:IsA("Sparkles")
+		or obj:IsA("Highlight") then
+
+		savedEffects[obj]=obj.Enabled
+		obj.Enabled=false
+
+	end
+
+end
+
+local function saveLight(obj)
+
+	if savedLights[obj]~=nil then
+		return
+	end
+
+	if obj:IsA("PointLight")
+		or obj:IsA("SpotLight")
+		or obj:IsA("SurfaceLight") then
+
+		savedLights[obj]=obj.Enabled
+		obj.Enabled=false
+
+	end
+
+end
+
+local function saveLightingEffect(obj)
+
+	if savedLightingEffects[obj]~=nil then
+		return
+	end
+
+	if obj:IsA("BloomEffect")
+		or obj:IsA("BlurEffect")
+		or obj:IsA("ColorCorrectionEffect")
+		or obj:IsA("DepthOfFieldEffect")
+		or obj:IsA("SunRaysEffect") then
+
+		savedLightingEffects[obj]=obj.Enabled
+		obj.Enabled=false
+
+	end
+
+end
+
+local function applyFastTo(obj)
+
+	saveTexture(obj)
+	saveEffect(obj)
+	saveLight(obj)
+	saveLightingEffect(obj)
+
+end
+
+local function enableFast()
+
+	if fastMode then
+		return
+	end
+
+	fastMode=true
+
+	-- Workspace visuals
+	for _,obj in ipairs(workspace:GetDescendants()) do
+		applyFastTo(obj)
+	end
+
+	-- Lighting effects
+	for _,obj in ipairs(L:GetDescendants()) do
+		saveLightingEffect(obj)
+	end
+
+	-- Sky
+	local sky=L:FindFirstChildOfClass("Sky")
+
+	if sky then
+		savedSkyParent=sky.Parent
+		sky.Parent=nil
+	end
+
+	fastButton.Text="FAST MODE: ON"
+
+	tw(
+		fastButton,
+		{
+			BackgroundColor3=
+				Color3.fromRGB(45,35,15)
+		},
+		.2
+	)
+
+end
+
+local function disableFast()
+
+	if not fastMode then
+		return
+	end
+
+	fastMode=false
+
+	-- Restore textures
+	for obj,value in pairs(savedTextures) do
+
+		if obj and obj.Parent then
+			pcall(function()
+				obj.Transparency=value
+			end)
+		end
+
+	end
+
+	-- Restore effects
+	for obj,value in pairs(savedEffects) do
+
+		if obj and obj.Parent then
+			pcall(function()
+				obj.Enabled=value
+			end)
+		end
+
+	end
+
+	-- Restore lights
+	for obj,value in pairs(savedLights) do
+
+		if obj and obj.Parent then
+			pcall(function()
+				obj.Enabled=value
+			end)
+		end
+
+	end
+
+	-- Restore Lighting effects
+	for obj,value in pairs(savedLightingEffects) do
+
+		if obj and obj.Parent then
+			pcall(function()
+				obj.Enabled=value
+			end)
+		end
+
+	end
+
+	-- Restore Sky
+	if savedSkyParent then
+
+		local sky=nil
+
+		for _,obj in ipairs(L:GetChildren()) do
+			if obj:IsA("Sky") then
+				sky=obj
+				break
+			end
+		end
+
+		if sky==nil then
+			for obj in pairs(savedTextures) do
+				if obj:IsA("Sky") then
+					sky=obj
+					break
+				end
+			end
+		end
+
+	end
+
+	fastButton.Text="FAST MODE: OFF"
+
+	tw(
+		fastButton,
+		{
+			BackgroundColor3=
+				Color3.fromRGB(18,18,21)
+		},
+		.2
+	)
+
+	-- Clear saved states for next ON cycle
+	savedTextures={}
+	savedEffects={}
+	savedLights={}
+	savedLightingEffects={}
+	savedSkyParent=nil
+
+end
+
+fastButton.MouseButton1Click:Connect(function()
+
+	if fastMode then
+		disableFast()
+	else
+		enableFast()
+	end
+
+end)
+
+--------------------------------------------------
+-- DETECT NEW VISUAL EFFECTS WHILE FAST MODE IS ON
+--------------------------------------------------
+
+workspace.DescendantAdded:Connect(function(obj)
+
+	if fastMode then
+		task.defer(function()
+			if fastMode then
+				applyFastTo(obj)
+			end
+		end)
+	end
+
+end)
+
+L.DescendantAdded:Connect(function(obj)
+
+	if fastMode then
+		task.defer(function()
+			if fastMode then
+				saveLightingEffect(obj)
+			end
+		end)
+	end
+
+end)
+
+--------------------------------------------------
 -- OPEN / CLOSE
 --------------------------------------------------
 
@@ -662,12 +1048,14 @@ B.MouseButton1Click:Connect(function()
 			credit,
 			back,
 			eye,
+			fastTab,
 			sw,
 			rj,
 			esp,
 			st,
 			sb,
-			sp
+			sp,
+			fastButton
 		}) do
 
 			v.TextTransparency=1
@@ -691,7 +1079,9 @@ B.MouseButton1Click:Connect(function()
 
 		task.wait(.12)
 
-		if tab=="main" then
+		if fastTab:GetAttribute("FastPage") then
+			fastPage()
+		elseif tab=="main" then
 			main()
 		else
 			eyes()
@@ -706,12 +1096,14 @@ B.MouseButton1Click:Connect(function()
 			credit,
 			back,
 			eye,
+			fastTab,
 			sw,
 			rj,
 			esp,
 			st,
 			sb,
-			sp
+			sp,
+			fastButton
 		}) do
 
 			fade(v,1,.12)
