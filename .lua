@@ -1,179 +1,154 @@
-local P=game.Players.LocalPlayer
-local U=game:GetService("UserInputService")
-local T=game:GetService("TweenService")
-local TP=game:GetService("TeleportService")
-local H=game:GetService("HttpService")
-local R=game:GetService("RunService")
-local L=game:GetService("Lighting")
+local Players=game:GetService("Players")
+local UIS=game:GetService("UserInputService")
+local TweenService=game:GetService("TweenService")
+local TeleportService=game:GetService("TeleportService")
+local HttpService=game:GetService("HttpService")
+local RunService=game:GetService("RunService")
+local Lighting=game:GetService("Lighting")
 
-local id=game.PlaceId
-local jid=game.JobId
-local gold=Color3.fromRGB(220,175,65)
+local P=Players.LocalPlayer
+local PG=P:WaitForChild("PlayerGui")
+local PID=game.PlaceId
+local JID=game.JobId
 
---------------------------------------------------
--- GUI
---------------------------------------------------
+local GOLD=Color3.fromRGB(220,175,65)
+local ON=Color3.fromRGB(100,255,140)
 
-local G=Instance.new("ScreenGui",P:WaitForChild("PlayerGui"))
+local SpeedEnabled=false
+local CustomSpeed=50
+local OriginalSpeed=16
+local ESPEnabled=false
+local FastModeEnabled=false
+local ReduceObjectsEnabled=false
+
+local CurrentCharacter
+local CurrentHumanoid
+local CurrentRoot
+local SpawnCFrame
+
+local HiddenObjects={}
+local FastHidden={}
+local ESPObjects={}
+local ESPConnections={}
+
+local HiddenCount=0
+local REDUCE_MAX_SIZE=4.5
+
+local G=Instance.new("ScreenGui")
 G.Name="StelleHub"
 G.ResetOnSpawn=false
 G.IgnoreGuiInset=true
 G.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+G.Parent=PG
 
---------------------------------------------------
--- ✨ BUTTON
---------------------------------------------------
-
-local B=Instance.new("TextButton",G)
+local B=Instance.new("TextButton")
+B.Name="Launcher"
 B.Size=UDim2.new(0,42,0,42)
 B.Position=UDim2.new(0,100,0,100)
 B.Text="✨"
 B.TextSize=23
 B.Font=Enum.Font.GothamBold
-B.TextColor3=gold
+B.TextColor3=GOLD
 B.BackgroundColor3=Color3.fromRGB(8,8,10)
 B.BackgroundTransparency=.08
 B.AutoButtonColor=false
 B.Active=true
 B.ZIndex=100
+B.Parent=G
 
 Instance.new("UICorner",B).CornerRadius=UDim.new(1,0)
 
 local BS=Instance.new("UIStroke",B)
-BS.Color=gold
-BS.Transparency=.45
+BS.Color=GOLD
+BS.Transparency=.4
 BS.Thickness=1
 
---------------------------------------------------
--- HUB
---------------------------------------------------
+local Hub=Instance.new("Frame")
+Hub.Name="HubContainer"
+Hub.Size=UDim2.new(0,336,0,220)
+Hub.Position=UDim2.new(.5,-168,.5,-110)
+Hub.BackgroundTransparency=1
+Hub.Visible=false
+Hub.Active=true
+Hub.ZIndex=40
+Hub.Parent=G
 
-local F=Instance.new("Frame",G)
-F.Size=UDim2.new(0,0,0,0)
-F.Position=UDim2.new(.5,0,.5,0)
-F.AnchorPoint=Vector2.new(.5,.5)
+local HubScale=Instance.new("UIScale")
+HubScale.Scale=1
+HubScale.Parent=Hub
+
+local F=Instance.new("Frame")
+F.Name="Panel"
+F.Size=UDim2.new(0,300,0,220)
+F.Position=UDim2.new(0,36,0,0)
 F.BackgroundColor3=Color3.fromRGB(7,7,9)
 F.BackgroundTransparency=.04
-F.Visible=false
-F.ZIndex=50
+F.Active=true
+F.ZIndex=45
+F.Parent=Hub
 
 Instance.new("UICorner",F).CornerRadius=UDim.new(0,18)
 
 local FS=Instance.new("UIStroke",F)
-FS.Color=gold
+FS.Color=GOLD
 FS.Transparency=.45
 FS.Thickness=1
 
---------------------------------------------------
--- NORMAL BUTTON CREATOR
---------------------------------------------------
-
-local function bt(t,y,w,h)
-	local b=Instance.new("TextButton",F)
-
+local function ModernButton(text,w,h,parent)
+	local b=Instance.new("TextButton")
 	b.Size=UDim2.new(0,w,0,h)
-	b.Position=UDim2.new(.5,-w/2,0,y)
-
-	b.Text=t
+	b.Text=text
 	b.Font=Enum.Font.GothamMedium
 	b.TextSize=12
-	b.TextColor3=gold
-	b.BackgroundColor3=Color3.fromRGB(18,18,21)
-	b.BackgroundTransparency=.05
+	b.TextColor3=GOLD
+	b.BackgroundColor3=Color3.fromRGB(18,18,22)
+	b.BackgroundTransparency=.04
 	b.AutoButtonColor=false
-	b.ZIndex=55
+	b.Active=true
+	b.ZIndex=60
+	b.Parent=parent
 
-	Instance.new("UICorner",b).CornerRadius=UDim.new(0,9)
+	Instance.new("UICorner",b).CornerRadius=UDim.new(0,10)
 
 	local s=Instance.new("UIStroke",b)
-	s.Color=gold
-	s.Transparency=.7
+	s.Color=GOLD
+	s.Transparency=.65
 	s.Thickness=1
+
+	b.MouseEnter:Connect(function()
+		b.BackgroundColor3=Color3.fromRGB(28,28,34)
+	end)
+
+	b.MouseLeave:Connect(function()
+		b.BackgroundColor3=Color3.fromRGB(18,18,22)
+	end)
 
 	return b
 end
 
---------------------------------------------------
--- SIDE TAB BUTTONS
---------------------------------------------------
+-- Smaller navigation buttons
+local back=ModernButton("🔄",32,32,Hub)
+back.Position=UDim2.new(0,2,0,34)
 
--- 🔄 OLD POSITION
-local back=Instance.new("TextButton",F)
-back.Size=UDim2.new(0,27,0,27)
-back.Position=UDim2.new(.5,-160,.5,-95)
-back.Text="🔄"
-back.Font=Enum.Font.GothamMedium
-back.TextSize=12
-back.TextColor3=gold
-back.BackgroundColor3=Color3.fromRGB(18,18,21)
-back.BackgroundTransparency=.05
-back.AutoButtonColor=false
-back.ZIndex=55
+local eye=ModernButton("👀",32,32,Hub)
+eye.Position=UDim2.new(0,2,0,76)
 
-Instance.new("UICorner",back).CornerRadius=UDim.new(0,9)
+local fastTab=ModernButton("⚡",32,32,Hub)
+fastTab.Position=UDim2.new(0,2,0,118)
 
-local backStroke=Instance.new("UIStroke",back)
-backStroke.Color=gold
-backStroke.Transparency=.7
-
--- 👀 OLD POSITION
-local eye=Instance.new("TextButton",F)
-eye.Size=UDim2.new(0,27,0,27)
-eye.Position=UDim2.new(.5,-160,.5,-62)
-eye.Text="👀"
-eye.Font=Enum.Font.GothamMedium
-eye.TextSize=12
-eye.TextColor3=gold
-eye.BackgroundColor3=Color3.fromRGB(18,18,21)
-eye.BackgroundTransparency=.05
-eye.AutoButtonColor=false
-eye.ZIndex=55
-
-Instance.new("UICorner",eye).CornerRadius=UDim.new(0,9)
-
-local eyeStroke=Instance.new("UIStroke",eye)
-eyeStroke.Color=gold
-eyeStroke.Transparency=.7
-
---------------------------------------------------
--- ⚡ FAST MODE SIDE BUTTON
--- DIRECTLY BELOW 👀
---------------------------------------------------
-
-local fastTab=Instance.new("TextButton",F)
-fastTab.Size=UDim2.new(0,27,0,27)
-fastTab.Position=UDim2.new(.5,-160,.5,-29)
-fastTab.Text="⚡"
-fastTab.Font=Enum.Font.GothamMedium
-fastTab.TextSize=12
-fastTab.TextColor3=gold
-fastTab.BackgroundColor3=Color3.fromRGB(18,18,21)
-fastTab.BackgroundTransparency=.05
-fastTab.AutoButtonColor=false
-fastTab.ZIndex=55
-
-Instance.new("UICorner",fastTab).CornerRadius=UDim.new(0,9)
-
-local fastTabStroke=Instance.new("UIStroke",fastTab)
-fastTabStroke.Color=gold
-fastTabStroke.Transparency=.7
-
---------------------------------------------------
--- TITLE
---------------------------------------------------
-
-local title=Instance.new("TextLabel",F)
+local title=Instance.new("TextLabel")
 title.Size=UDim2.new(1,-20,0,28)
 title.Position=UDim2.new(0,10,0,7)
 title.Text="Stelle Hub"
-title.TextColor3=gold
+title.TextColor3=GOLD
 title.Font=Enum.Font.Garamond
 title.TextSize=19
 title.BackgroundTransparency=1
 title.TextXAlignment=Enum.TextXAlignment.Right
 title.ZIndex=55
+title.Parent=F
 
-local credit=Instance.new("TextLabel",F)
+local credit=Instance.new("TextLabel")
 credit.Size=UDim2.new(1,-20,0,20)
 credit.Position=UDim2.new(0,10,1,-27)
 credit.Text="by Ian James"
@@ -182,1029 +157,813 @@ credit.Font=Enum.Font.Garamond
 credit.TextSize=12
 credit.BackgroundTransparency=1
 credit.ZIndex=55
+credit.Parent=F
 
---------------------------------------------------
--- MAIN TAB
---------------------------------------------------
+local Content=Instance.new("ScrollingFrame")
+Content.Name="Content"
+Content.Size=UDim2.new(1,-35,1,-65)
+Content.Position=UDim2.new(0,25,0,43)
+Content.BackgroundTransparency=1
+Content.BorderSizePixel=0
+Content.ScrollBarThickness=2
+Content.ScrollBarImageColor3=GOLD
+Content.CanvasSize=UDim2.new(0,0,0,0)
+Content.AutomaticCanvasSize=Enum.AutomaticSize.Y
+Content.ScrollingDirection=Enum.ScrollingDirection.Y
+Content.ZIndex=55
+Content.Parent=F
 
-local sw=bt("Switch",75,110,35)
-local rj=bt("Rejoin",120,110,35)
+local MainContent=Instance.new("Frame")
+MainContent.Size=UDim2.new(1,-5,0,145)
+MainContent.BackgroundTransparency=1
+MainContent.Parent=Content
 
---------------------------------------------------
--- 👀 TAB
---------------------------------------------------
+local EyesContent=Instance.new("Frame")
+EyesContent.Size=UDim2.new(1,-5,0,210)
+EyesContent.BackgroundTransparency=1
+EyesContent.Visible=false
+EyesContent.Parent=Content
 
-local esp=bt("ESP: OFF",55,130,36)
-esp.Visible=false
+local FastContent=Instance.new("Frame")
+FastContent.Size=UDim2.new(1,-5,0,165)
+FastContent.BackgroundTransparency=1
+FastContent.Visible=false
+FastContent.Parent=Content
 
-local st=Instance.new("TextLabel",F)
-st.Size=UDim2.new(0,150,0,22)
-st.Position=UDim2.new(.5,-75,0,100)
+local sw=ModernButton("SWITCH SERVER",150,36,MainContent)
+sw.Position=UDim2.new(.5,-75,0,15)
+
+local rj=ModernButton("REJOIN",150,36,MainContent)
+rj.Position=UDim2.new(.5,-75,0,65)
+
+local esp=ModernButton("ESP  •  OFF",150,34,EyesContent)
+esp.Position=UDim2.new(.5,-75,0,5)
+
+local st=Instance.new("TextLabel")
+st.Size=UDim2.new(0,150,0,18)
+st.Position=UDim2.new(.5,-75,0,47)
 st.Text="EDIT SPEED"
-st.TextColor3=gold
+st.TextColor3=GOLD
 st.Font=Enum.Font.GothamMedium
-st.TextSize=13
+st.TextSize=11
 st.BackgroundTransparency=1
-st.Visible=false
-st.ZIndex=55
+st.Parent=EyesContent
 
-local sb=Instance.new("TextBox",F)
-sb.Size=UDim2.new(0,130,0,34)
-sb.Position=UDim2.new(.5,-65,0,123)
+local sb=Instance.new("TextBox")
+sb.Size=UDim2.new(0,140,0,32)
+sb.Position=UDim2.new(.5,-70,0,68)
 sb.PlaceholderText="Enter speed"
 sb.PlaceholderColor3=Color3.fromRGB(100,100,105)
-sb.Text=""
-sb.TextColor3=gold
+sb.TextColor3=GOLD
 sb.TextSize=13
 sb.Font=Enum.Font.Gotham
 sb.BackgroundColor3=Color3.fromRGB(15,15,18)
-sb.BackgroundTransparency=.05
+sb.BackgroundTransparency=.04
 sb.ClearTextOnFocus=false
 sb.TextXAlignment=Enum.TextXAlignment.Center
-sb.Visible=false
-sb.ZIndex=55
+sb.Parent=EyesContent
 
-Instance.new("UICorner",sb).CornerRadius=UDim.new(0,9)
+Instance.new("UICorner",sb).CornerRadius=UDim.new(0,10)
 
 local ss=Instance.new("UIStroke",sb)
-ss.Color=gold
-ss.Transparency=.65
+ss.Color=GOLD
+ss.Transparency=.6
 
-local sp=bt("Speed: OFF",164,130,34)
-sp.Visible=false
+local sp=ModernButton("SPEED  •  OFF",150,34,EyesContent)
+sp.Position=UDim2.new(.5,-75,0,110)
 
---------------------------------------------------
--- FAST MODE CENTER BUTTON
---------------------------------------------------
+local spawnButton=ModernButton("TELEPORT TO SPAWN",170,34,EyesContent)
+spawnButton.Position=UDim2.new(.5,-85,0,155)
 
-local fastButton=Instance.new("TextButton",F)
-fastButton.Size=UDim2.new(0,140,0,40)
-fastButton.Position=UDim2.new(.5,-70,.5,-20)
-fastButton.Text="FAST MODE: OFF"
-fastButton.Font=Enum.Font.GothamMedium
-fastButton.TextSize=12
-fastButton.TextColor3=gold
-fastButton.BackgroundColor3=Color3.fromRGB(18,18,21)
-fastButton.BackgroundTransparency=.05
-fastButton.AutoButtonColor=false
-fastButton.Visible=false
-fastButton.ZIndex=60
+local fastButton=ModernButton("FAST MODE  •  OFF",170,38,FastContent)
+fastButton.Position=UDim2.new(.5,-85,0,15)
 
-Instance.new("UICorner",fastButton).CornerRadius=UDim.new(0,10)
+local reduceButton=ModernButton("REDUCE OBJECTS  •  OFF",170,38,FastContent)
+reduceButton.Position=UDim2.new(.5,-85,0,65)
 
-local fastStroke=Instance.new("UIStroke",fastButton)
-fastStroke.Color=gold
-fastStroke.Transparency=.65
+local reduceInfo=Instance.new("TextLabel")
+reduceInfo.Size=UDim2.new(0,200,0,20)
+reduceInfo.Position=UDim2.new(.5,-100,0,110)
+reduceInfo.Text="Hidden: 0 objects"
+reduceInfo.TextColor3=Color3.fromRGB(155,155,160)
+reduceInfo.Font=Enum.Font.Gotham
+reduceInfo.TextSize=10
+reduceInfo.BackgroundTransparency=1
+reduceInfo.Parent=FastContent
 
---------------------------------------------------
--- TWEEN
---------------------------------------------------
+local function ShowPage(page)
+	MainContent.Visible=false
+	EyesContent.Visible=false
+	FastContent.Visible=false
 
-local function tw(o,p,t)
-	T:Create(
-		o,
-		TweenInfo.new(
-			t or .2,
-			Enum.EasingStyle.Quad,
-			Enum.EasingDirection.Out
-		),
-		p
-	):Play()
+	page.Visible=true
+	Content.CanvasPosition=Vector2.new(0,0)
 end
 
-local function fade(v,a,t)
-	local p={
-		TextTransparency=a
-	}
-
-	if v:IsA("TextButton") or v:IsA("TextBox") then
-		p.BackgroundTransparency=a==1 and 1 or .05
-	end
-
-	tw(v,p,t or .18)
+local function ShowMain()
+	ShowPage(MainContent)
 end
 
---------------------------------------------------
--- TAB STATE
---------------------------------------------------
-
-local tab="main"
-
-local function hideNormal()
-	sw.Visible=false
-	rj.Visible=false
-
-	esp.Visible=false
-	st.Visible=false
-	sb.Visible=false
-	sp.Visible=false
+local function ShowEyes()
+	ShowPage(EyesContent)
 end
 
-local function main()
-	tab="main"
+local function ShowFast()
+	ShowPage(FastContent)
+end
 
-	if fastTab:GetAttribute("FastPage") then
-		fastButton.Visible=true
-		hideNormal()
-		return
-	end
+back.MouseButton1Click:Connect(ShowMain)
+eye.MouseButton1Click:Connect(ShowEyes)
+fastTab.MouseButton1Click:Connect(ShowFast)
 
-	fastButton.Visible=false
+local function GetChar()
+	local c=P.Character
+	if not c then return end
 
-	sw.Visible=true
-	rj.Visible=true
+	local h=c:FindFirstChildOfClass("Humanoid")
+	local r=c:FindFirstChild("HumanoidRootPart")
 
-	esp.Visible=false
-	st.Visible=false
-	sb.Visible=false
-	sp.Visible=false
-
-	for _,v in ipairs({
-		title,
-		credit,
-		back,
-		eye,
-		fastTab,
-		sw,
-		rj
-	}) do
-		fade(v,0,.18)
+	if h and r then
+		return c,h,r
 	end
 end
 
-local function eyes()
-	tab="eyes"
+local function CharacterAdded(c)
+	CurrentCharacter=c
 
-	if fastTab:GetAttribute("FastPage") then
-		fastButton.Visible=true
-		hideNormal()
-		return
-	end
+	CurrentHumanoid=c:WaitForChild("Humanoid",10)
+	CurrentRoot=c:WaitForChild("HumanoidRootPart",10)
 
-	fastButton.Visible=false
+	if not CurrentHumanoid or not CurrentRoot then return end
 
-	sw.Visible=false
-	rj.Visible=false
+	OriginalSpeed=CurrentHumanoid.WalkSpeed
 
-	esp.Visible=true
-	st.Visible=true
-	sb.Visible=true
-	sp.Visible=true
+	task.wait(.15)
 
-	for _,v in ipairs({
-		title,
-		credit,
-		back,
-		eye,
-		fastTab,
-		esp,
-		st,
-		sb,
-		sp
-	}) do
-		fade(v,0,.18)
+	SpawnCFrame=CurrentRoot.CFrame
+
+	if SpeedEnabled then
+		CurrentHumanoid.WalkSpeed=CustomSpeed
 	end
 end
 
---------------------------------------------------
--- FAST PAGE
---------------------------------------------------
-
-local function fastPage()
-
-	fastTab:SetAttribute("FastPage",true)
-
-	sw.Visible=false
-	rj.Visible=false
-
-	esp.Visible=false
-	st.Visible=false
-	sb.Visible=false
-	sp.Visible=false
-
-	fastButton.Visible=true
-
-	for _,v in ipairs({
-		title,
-		credit,
-		back,
-		eye,
-		fastTab,
-		fastButton
-	}) do
-		fade(v,0,.18)
-	end
-
+if P.Character then
+	task.spawn(CharacterAdded,P.Character)
 end
 
-back.MouseButton1Click:Connect(function()
+P.CharacterAdded:Connect(CharacterAdded)
 
-	fastTab:SetAttribute("FastPage",false)
-	main()
+RunService.Heartbeat:Connect(function()
+	if CurrentHumanoid
+	and CurrentHumanoid.Health>0
+	and SpeedEnabled then
 
-end)
-
-eye.MouseButton1Click:Connect(function()
-
-	fastTab:SetAttribute("FastPage",false)
-	eyes()
-
-end)
-
-fastTab.MouseButton1Click:Connect(fastPage)
-
---------------------------------------------------
--- SWITCH SERVER
---------------------------------------------------
-
-sw.MouseButton1Click:Connect(function()
-
-	local s={}
-
-	local ok,d=pcall(function()
-
-		return H:JSONDecode(
-			game:HttpGet(
-				"https://games.roblox.com/v1/games/"
-				..id..
-				"/servers/Public?limit=100"
-			)
-		)
-
-	end)
-
-	if ok and d and d.data then
-
-		for _,v in ipairs(d.data) do
-
-			if v.id~=jid then
-				table.insert(s,v.id)
-			end
-
+		if math.abs(CurrentHumanoid.WalkSpeed-CustomSpeed)>.1 then
+			CurrentHumanoid.WalkSpeed=CustomSpeed
 		end
-
 	end
-
-	if #s>0 then
-
-		TP:TeleportToPlaceInstance(
-			id,
-			s[math.random(1,#s)]
-		)
-
-	else
-
-		TP:Teleport(id)
-
-	end
-
 end)
-
---------------------------------------------------
--- REJOIN
---------------------------------------------------
-
-rj.MouseButton1Click:Connect(function()
-
-	TP:TeleportToPlaceInstance(
-		id,
-		jid
-	)
-
-end)
-
---------------------------------------------------
--- ESP
---------------------------------------------------
-
-local eo=false
-local labels={}
-local connections={}
-
-local function removeESP(p)
-
-	if labels[p] then
-		labels[p]:Destroy()
-		labels[p]=nil
-	end
-
-	if connections[p] then
-		connections[p]:Disconnect()
-		connections[p]=nil
-	end
-
-end
-
-local function clear()
-
-	for p in pairs(labels) do
-		removeESP(p)
-	end
-
-end
-
-local function add(p)
-
-	if labels[p] then
-		return
-	end
-
-	local l=Instance.new("TextLabel",G)
-
-	l.Name="ESP_"..p.Name
-	l.Size=UDim2.new(0,200,0,40)
-
-	l.BackgroundTransparency=1
-
-	l.TextColor3=gold
-	l.TextStrokeColor3=Color3.new(0,0,0)
-	l.TextStrokeTransparency=0
-
-	l.TextScaled=true
-	l.Font=Enum.Font.GothamMedium
-
-	l.ZIndex=20
-	l.Visible=false
-
-	labels[p]=l
-
-	connections[p]=R.RenderStepped:Connect(function()
-
-		if not eo or not p.Parent then
-
-			l.Visible=false
-			return
-
-		end
-
-		local c=p.Character
-		local me=P.Character
-		local cam=workspace.CurrentCamera
-
-		if not c or not me or not cam then
-
-			l.Visible=false
-			return
-
-		end
-
-		local root=c:FindFirstChild("HumanoidRootPart")
-		local my=me:FindFirstChild("HumanoidRootPart")
-
-		if not root or not my then
-
-			l.Visible=false
-			return
-
-		end
-
-		local pos,on=
-			cam:WorldToViewportPoint(root.Position)
-
-		if on and pos.Z>0 then
-
-			local d=math.floor(
-				(my.Position-root.Position).Magnitude
-			)
-
-			l.Text=
-				p.Name..
-				(
-					p==P
-					and "\nYOU [0]"
-					or "\n"..d.." studs"
-				)
-
-			l.Position=UDim2.new(
-				0,
-				pos.X-100,
-				0,
-				pos.Y-50
-			)
-
-			l.Visible=true
-
-		else
-
-			l.Visible=false
-
-		end
-
-	end)
-
-end
-
-esp.MouseButton1Click:Connect(function()
-
-	eo=not eo
-
-	if eo then
-
-		esp.Text="ESP: ON"
-
-		for _,p in ipairs(game.Players:GetPlayers()) do
-			add(p)
-		end
-
-		tw(
-			esp,
-			{
-				BackgroundColor3=
-					Color3.fromRGB(45,35,15)
-			},
-			.2
-		)
-
-	else
-
-		esp.Text="ESP: OFF"
-
-		clear()
-
-		tw(
-			esp,
-			{
-				BackgroundColor3=
-					Color3.fromRGB(18,18,21)
-			},
-			.2
-		)
-
-	end
-
-end)
-
-game.Players.PlayerAdded:Connect(function(p)
-
-	if eo then
-		add(p)
-	end
-
-end)
-
-game.Players.PlayerRemoving:Connect(function(p)
-
-	removeESP(p)
-
-end)
-
---------------------------------------------------
--- SPEED
---------------------------------------------------
-
-local se=false
-local speed=16
-local old=nil
 
 sb.FocusLost:Connect(function()
-
 	local n=tonumber(sb.Text)
 
 	if n then
+		CustomSpeed=math.max(1,math.floor(n+.5))
+		sb.Text=tostring(CustomSpeed)
 
-		speed=math.clamp(n,1,500)
-		sb.Text=tostring(speed)
-
+		if SpeedEnabled and CurrentHumanoid then
+			CurrentHumanoid.WalkSpeed=CustomSpeed
+		end
 	else
-
-		sb.Text=tostring(speed)
-
+		sb.Text=tostring(CustomSpeed)
 	end
-
 end)
 
 sp.MouseButton1Click:Connect(function()
+	SpeedEnabled=not SpeedEnabled
 
-	local n=tonumber(sb.Text)
+	sp.Text=SpeedEnabled
+		and "SPEED  •  ON"
+		or "SPEED  •  OFF"
 
-	if n then
+	sp.TextColor3=SpeedEnabled and ON or GOLD
 
-		speed=math.clamp(n,1,500)
-		sb.Text=tostring(speed)
+	if CurrentHumanoid then
+		CurrentHumanoid.WalkSpeed=
+			SpeedEnabled and CustomSpeed or OriginalSpeed
+	end
+end)
 
+spawnButton.MouseButton1Click:Connect(function()
+	local c,h,r=GetChar()
+	if not c then return end
+
+	SpawnCFrame=SpawnCFrame or r.CFrame
+
+	local start=os.clock()
+
+	local con
+
+	con=RunService.Heartbeat:Connect(function()
+		if not h.Parent or os.clock()-start>=2 then
+			con:Disconnect()
+			return
+		end
+
+		if h.Health<h.MaxHealth then
+			h.Health=h.MaxHealth
+		end
+	end)
+
+	c:PivotTo(SpawnCFrame+Vector3.new(0,3,0))
+
+	spawnButton.Text="SPAWN TELEPORTED"
+	spawnButton.TextColor3=ON
+
+	task.delay(1,function()
+		if spawnButton.Parent then
+			spawnButton.Text="TELEPORT TO SPAWN"
+			spawnButton.TextColor3=GOLD
+		end
+	end)
+end)
+
+local function RemoveESP(p)
+	local d=ESPObjects[p]
+
+	if d then
+		if d.Gui then
+			d.Gui:Destroy()
+		end
+
+		if d.Connection then
+			d.Connection:Disconnect()
+		end
+
+		ESPObjects[p]=nil
+	end
+end
+
+local function CreateESP(p)
+	if not ESPEnabled then return end
+
+	RemoveESP(p)
+
+	local c=p.Character
+	if not c then return end
+
+	local head=c:FindFirstChild("Head")
+
+	if not head then
+		head=c:WaitForChild("Head",5)
 	end
 
-	local h=
-		P.Character
-		and P.Character:FindFirstChildOfClass("Humanoid")
+	if not head then return end
 
-	if not se then
+	local gui=Instance.new("BillboardGui")
+	gui.Name="StelleESP"
+	gui.Adornee=head
+	gui.Size=UDim2.new(0,180,0,40)
+	gui.StudsOffset=Vector3.new(0,2.5,0)
+	gui.AlwaysOnTop=true
+	gui.MaxDistance=10000
+	gui.Parent=head
 
-		old=h and h.WalkSpeed or 16
+	local label=Instance.new("TextLabel")
+	label.Size=UDim2.new(1,0,1,0)
+	label.BackgroundTransparency=1
+	label.Font=Enum.Font.GothamBold
+	label.TextSize=12
+	label.TextColor3=GOLD
+	label.TextStrokeTransparency=.45
+	label.Parent=gui
 
-		se=true
-		sp.Text="Speed: ON"
+	local connection
 
-		tw(
-			sp,
-			{
-				BackgroundColor3=
-					Color3.fromRGB(45,35,15)
-			},
-			.2
-		)
+	connection=RunService.RenderStepped:Connect(function()
+		if not ESPEnabled then return end
 
+		if not p.Parent or not c.Parent then
+			RemoveESP(p)
+			return
+		end
+
+		local myChar=P.Character
+		local myRoot=myChar and myChar:FindFirstChild("HumanoidRootPart")
+		local theirRoot=c:FindFirstChild("HumanoidRootPart")
+
+		if myRoot and theirRoot then
+			local distance=(myRoot.Position-theirRoot.Position).Magnitude
+
+			if p==P then
+				label.Text="YOU [0 studs]"
+			else
+				label.Text=p.Name.." ["..math.floor(distance).." studs]"
+			end
+		end
+	end)
+
+	ESPObjects[p]={
+		Gui=gui,
+		Connection=connection
+	}
+end
+
+local function WatchPlayer(p)
+	if ESPConnections[p] then
+		ESPConnections[p]:Disconnect()
+	end
+
+	ESPConnections[p]=p.CharacterAdded:Connect(function()
+		if ESPEnabled then
+			task.wait(.3)
+			CreateESP(p)
+		end
+	end)
+
+	if ESPEnabled and p.Character then
+		task.spawn(CreateESP,p)
+	end
+end
+
+local function EnableESP()
+	ESPEnabled=true
+
+	esp.Text="ESP  •  ON"
+	esp.TextColor3=ON
+
+	for _,p in ipairs(Players:GetPlayers()) do
+		WatchPlayer(p)
+	end
+end
+
+local function DisableESP()
+	ESPEnabled=false
+
+	esp.Text="ESP  •  OFF"
+	esp.TextColor3=GOLD
+
+	for p in pairs(ESPObjects) do
+		RemoveESP(p)
+	end
+end
+
+esp.MouseButton1Click:Connect(function()
+	if ESPEnabled then
+		DisableESP()
 	else
-
-		se=false
-
-		if h and old then
-			h.WalkSpeed=old
-		end
-
-		sp.Text="Speed: OFF"
-
-		tw(
-			sp,
-			{
-				BackgroundColor3=
-					Color3.fromRGB(18,18,21)
-			},
-			.2
-		)
-
-		old=nil
-
+		EnableESP()
 	end
-
 end)
 
-R.Heartbeat:Connect(function()
-
-	if not se then
-		return
-	end
-
-	local c=P.Character
-	local h=
-		c and c:FindFirstChildOfClass("Humanoid")
-
-	if h then
-		h.WalkSpeed=speed
-	end
-
+Players.PlayerAdded:Connect(function(p)
+	WatchPlayer(p)
 end)
 
-P.CharacterAdded:Connect(function(c)
+Players.PlayerRemoving:Connect(function(p)
+	RemoveESP(p)
 
-	local h=c:WaitForChild("Humanoid",5)
-
-	if h and se then
-
-		old=h.WalkSpeed
-		h.WalkSpeed=speed
-
+	if ESPConnections[p] then
+		ESPConnections[p]:Disconnect()
+		ESPConnections[p]=nil
 	end
-
 end)
 
---------------------------------------------------
--- FAST MODE
---------------------------------------------------
+local function SaveFastObject(o)
+	if FastHidden[o]~=nil then return end
 
-local fastMode=false
+	if o:IsA("Decal") or o:IsA("Texture") then
+		FastHidden[o]={
+			Type="Texture",
+			Transparency=o.Transparency
+		}
 
-local savedTextures={}
-local savedEffects={}
-local savedLights={}
-local savedLightingEffects={}
-local savedSkyParent=nil
-
-local function saveTexture(obj)
-
-	if savedTextures[obj]~=nil then
-		return
+		o.Transparency=1
 	end
 
-	if obj:IsA("Decal") or obj:IsA("Texture") then
+	if o:IsA("ParticleEmitter")
+	or o:IsA("Trail")
+	or o:IsA("Beam")
+	or o:IsA("Smoke")
+	or o:IsA("Fire")
+	or o:IsA("Sparkles")
+	or o:IsA("Highlight") then
 
-		savedTextures[obj]=obj.Transparency
-		obj.Transparency=1
+		FastHidden[o]={
+			Type="Enabled",
+			Enabled=o.Enabled
+		}
 
+		o.Enabled=false
 	end
 
+	if o:IsA("PointLight")
+	or o:IsA("SpotLight")
+	or o:IsA("SurfaceLight") then
+
+		FastHidden[o]={
+			Type="Enabled",
+			Enabled=o.Enabled
+		}
+
+		o.Enabled=false
+	end
 end
 
-local function saveEffect(obj)
+local function ApplyFastMode()
+	if not FastModeEnabled then return end
 
-	if savedEffects[obj]~=nil then
-		return
-	end
-
-	if obj:IsA("ParticleEmitter")
-		or obj:IsA("Trail")
-		or obj:IsA("Beam")
-		or obj:IsA("Smoke")
-		or obj:IsA("Fire")
-		or obj:IsA("Sparkles")
-		or obj:IsA("Highlight") then
-
-		savedEffects[obj]=obj.Enabled
-		obj.Enabled=false
-
-	end
-
-end
-
-local function saveLight(obj)
-
-	if savedLights[obj]~=nil then
-		return
-	end
-
-	if obj:IsA("PointLight")
-		or obj:IsA("SpotLight")
-		or obj:IsA("SurfaceLight") then
-
-		savedLights[obj]=obj.Enabled
-		obj.Enabled=false
-
-	end
-
-end
-
-local function saveLightingEffect(obj)
-
-	if savedLightingEffects[obj]~=nil then
-		return
-	end
-
-	if obj:IsA("BloomEffect")
-		or obj:IsA("BlurEffect")
-		or obj:IsA("ColorCorrectionEffect")
-		or obj:IsA("DepthOfFieldEffect")
-		or obj:IsA("SunRaysEffect") then
-
-		savedLightingEffects[obj]=obj.Enabled
-		obj.Enabled=false
-
-	end
-
-end
-
-local function applyFastTo(obj)
-
-	saveTexture(obj)
-	saveEffect(obj)
-	saveLight(obj)
-	saveLightingEffect(obj)
-
-end
-
-local function enableFast()
-
-	if fastMode then
-		return
-	end
-
-	fastMode=true
-
-	-- Workspace visuals
-	for _,obj in ipairs(workspace:GetDescendants()) do
-		applyFastTo(obj)
-	end
-
-	-- Lighting effects
-	for _,obj in ipairs(L:GetDescendants()) do
-		saveLightingEffect(obj)
-	end
-
-	-- Sky
-	local sky=L:FindFirstChildOfClass("Sky")
-
-	if sky then
-		savedSkyParent=sky.Parent
-		sky.Parent=nil
-	end
-
-	fastButton.Text="FAST MODE: ON"
-
-	tw(
-		fastButton,
-		{
-			BackgroundColor3=
-				Color3.fromRGB(45,35,15)
-		},
-		.2
-	)
-
-end
-
-local function disableFast()
-
-	if not fastMode then
-		return
-	end
-
-	fastMode=false
-
-	-- Restore textures
-	for obj,value in pairs(savedTextures) do
-
-		if obj and obj.Parent then
-			pcall(function()
-				obj.Transparency=value
-			end)
+	for _,o in ipairs(workspace:GetDescendants()) do
+		if CurrentCharacter and o:IsDescendantOf(CurrentCharacter) then
+			continue
 		end
 
-	end
+		if o:IsA("Decal")
+		or o:IsA("Texture")
+		or o:IsA("ParticleEmitter")
+		or o:IsA("Trail")
+		or o:IsA("Beam")
+		or o:IsA("Smoke")
+		or o:IsA("Fire")
+		or o:IsA("Sparkles")
+		or o:IsA("Highlight")
+		or o:IsA("PointLight")
+		or o:IsA("SpotLight")
+		or o:IsA("SurfaceLight") then
 
-	-- Restore effects
-	for obj,value in pairs(savedEffects) do
-
-		if obj and obj.Parent then
-			pcall(function()
-				obj.Enabled=value
-			end)
+			SaveFastObject(o)
 		end
-
 	end
 
-	-- Restore lights
-	for obj,value in pairs(savedLights) do
+	for _,o in ipairs(Lighting:GetChildren()) do
+		if o:IsA("BloomEffect")
+		or o:IsA("BlurEffect")
+		or o:IsA("ColorCorrectionEffect")
+		or o:IsA("SunRaysEffect")
+		or o:IsA("DepthOfFieldEffect") then
 
-		if obj and obj.Parent then
-			pcall(function()
-				obj.Enabled=value
-			end)
-		end
+			if FastHidden[o]==nil then
+				FastHidden[o]={
+					Type="Enabled",
+					Enabled=o.Enabled
+				}
 
-	end
-
-	-- Restore Lighting effects
-	for obj,value in pairs(savedLightingEffects) do
-
-		if obj and obj.Parent then
-			pcall(function()
-				obj.Enabled=value
-			end)
-		end
-
-	end
-
-	-- Restore Sky
-	if savedSkyParent then
-
-		local sky=nil
-
-		for _,obj in ipairs(L:GetChildren()) do
-			if obj:IsA("Sky") then
-				sky=obj
-				break
+				o.Enabled=false
 			end
 		end
+	end
+end
 
-		if sky==nil then
-			for obj in pairs(savedTextures) do
-				if obj:IsA("Sky") then
-					sky=obj
-					break
+local function RestoreFastMode()
+	for o,d in pairs(FastHidden) do
+		if o and o.Parent then
+			pcall(function()
+				if d.Type=="Texture" then
+					o.Transparency=d.Transparency
+				else
+					o.Enabled=d.Enabled
 				end
-			end
+			end)
 		end
-
 	end
 
-	fastButton.Text="FAST MODE: OFF"
-
-	tw(
-		fastButton,
-		{
-			BackgroundColor3=
-				Color3.fromRGB(18,18,21)
-		},
-		.2
-	)
-
-	-- Clear saved states for next ON cycle
-	savedTextures={}
-	savedEffects={}
-	savedLights={}
-	savedLightingEffects={}
-	savedSkyParent=nil
-
+	table.clear(FastHidden)
 end
 
 fastButton.MouseButton1Click:Connect(function()
+	FastModeEnabled=not FastModeEnabled
 
-	if fastMode then
-		disableFast()
+	fastButton.Text=
+		FastModeEnabled
+		and "FAST MODE  •  ON"
+		or "FAST MODE  •  OFF"
+
+	fastButton.TextColor3=
+		FastModeEnabled and ON or GOLD
+
+	if FastModeEnabled then
+		ApplyFastMode()
 	else
-		enableFast()
+		RestoreFastMode()
 	end
-
 end)
 
---------------------------------------------------
--- DETECT NEW VISUAL EFFECTS WHILE FAST MODE IS ON
---------------------------------------------------
+local function Important(o)
+	if not o:IsA("BasePart") then return true end
+	if CurrentCharacter and o:IsDescendantOf(CurrentCharacter) then return true end
+	if o:IsA("SpawnLocation") then return true end
+	if o:IsDescendantOf(workspace.Terrain) then return true end
 
-workspace.DescendantAdded:Connect(function(obj)
+	local s=o.Size
 
-	if fastMode then
-		task.defer(function()
-			if fastMode then
-				applyFastTo(obj)
-			end
-		end)
+	if s.X>REDUCE_MAX_SIZE
+	or s.Y>REDUCE_MAX_SIZE
+	or s.Z>REDUCE_MAX_SIZE then
+		return true
 	end
 
-end)
-
-L.DescendantAdded:Connect(function(obj)
-
-	if fastMode then
-		task.defer(function()
-			if fastMode then
-				saveLightingEffect(obj)
-			end
-		end)
-	end
-
-end)
-
---------------------------------------------------
--- OPEN / CLOSE
---------------------------------------------------
-
-local open=false
-local busy=false
-
-B.MouseButton1Click:Connect(function()
-
-	if busy then
-		return
-	end
-
-	busy=true
-
-	if not open then
-
-		F.Visible=true
-		F.Size=UDim2.new(0,0,0,0)
-
-		for _,v in ipairs({
-			title,
-			credit,
-			back,
-			eye,
-			fastTab,
-			sw,
-			rj,
-			esp,
-			st,
-			sb,
-			sp,
-			fastButton
-		}) do
-
-			v.TextTransparency=1
-
-			if v:IsA("TextButton")
-				or v:IsA("TextBox") then
-
-				v.BackgroundTransparency=1
-
-			end
-
-		end
-
-		tw(
-			F,
-			{
-				Size=UDim2.new(0,260,0,220)
-			},
-			.3
-		)
-
-		task.wait(.12)
-
-		if fastTab:GetAttribute("FastPage") then
-			fastPage()
-		elseif tab=="main" then
-			main()
-		else
-			eyes()
-		end
-
-		open=true
-
-	else
-
-		for _,v in ipairs({
-			title,
-			credit,
-			back,
-			eye,
-			fastTab,
-			sw,
-			rj,
-			esp,
-			st,
-			sb,
-			sp,
-			fastButton
-		}) do
-
-			fade(v,1,.12)
-
-		end
-
-		task.wait(.14)
-
-		tw(
-			F,
-			{
-				Size=UDim2.new(0,0,0,0)
-			},
-			.28
-		)
-
-		task.wait(.28)
-
-		F.Visible=false
-		open=false
-
-	end
-
-	busy=false
-
-end)
-
---------------------------------------------------
--- DRAG
---------------------------------------------------
-
-local function drag(o)
-
-	local d=false
-	local start
-	local pos
-	local move
-
-	o.InputBegan:Connect(function(i)
-
-		if i.UserInputType==
-			Enum.UserInputType.Touch
-			or i.UserInputType==
-			Enum.UserInputType.MouseButton1 then
-
-			d=true
-			start=i.Position
-			pos=o.Position
-
-			if move then
-				move:Disconnect()
-			end
-
-			move=U.InputChanged:Connect(function(x)
-
-				if not d then
-					return
-				end
-
-				if x.UserInputType==
-					Enum.UserInputType.Touch
-					or x.UserInputType==
-					Enum.UserInputType.MouseMovement then
-
-					local z=x.Position-start
-
-					o.Position=UDim2.new(
-						pos.X.Scale,
-						pos.X.Offset+z.X,
-						pos.Y.Scale,
-						pos.Y.Offset+z.Y
-					)
-
-				end
-
-			end)
-
-			i.Changed:Connect(function()
-
-				if i.UserInputState==
-					Enum.UserInputState.End then
-
-					d=false
-
-					if move then
-						move:Disconnect()
-						move=nil
-					end
-
-				end
-
-			end)
-
-		end
-
-	end)
-
+	return false
 end
 
-drag(B)
-drag(F)
+local function UpdateHiddenCount()
+	HiddenCount=0
 
-B.Visible=true
-B.Active=true
+	for o in pairs(HiddenObjects) do
+		if o and o.Parent and o:IsA("BasePart") then
+			HiddenCount+=1
+		end
+	end
+
+	reduceInfo.Text="Hidden: "..HiddenCount.." objects"
+end
+
+local function HideObject(o)
+	if not ReduceObjectsEnabled then return end
+	if Important(o) then return end
+	if HiddenObjects[o] then return end
+
+	HiddenObjects[o]={
+		Transparency=o.LocalTransparencyModifier
+	}
+
+	o.LocalTransparencyModifier=1
+
+	HiddenCount+=1
+end
+
+local function ReduceObjects()
+	HiddenCount=0
+
+	for _,o in ipairs(workspace:GetDescendants()) do
+		HideObject(o)
+	end
+
+	UpdateHiddenCount()
+end
+
+local function RestoreObjects()
+	for o,d in pairs(HiddenObjects) do
+		if o and o.Parent then
+			pcall(function()
+				o.LocalTransparencyModifier=d.Transparency
+			end)
+		end
+	end
+
+	table.clear(HiddenObjects)
+
+	HiddenCount=0
+	reduceInfo.Text="Hidden: 0 objects"
+end
+
+reduceButton.MouseButton1Click:Connect(function()
+	ReduceObjectsEnabled=not ReduceObjectsEnabled
+
+	reduceButton.Text=
+		ReduceObjectsEnabled
+		and "REDUCE OBJECTS  •  ON"
+		or "REDUCE OBJECTS  •  OFF"
+
+	reduceButton.TextColor3=
+		ReduceObjectsEnabled and ON or GOLD
+
+	if ReduceObjectsEnabled then
+		ReduceObjects()
+	else
+		RestoreObjects()
+	end
+end)
+
+workspace.DescendantAdded:Connect(function(o)
+	if ReduceObjectsEnabled then
+		task.defer(function()
+			HideObject(o)
+			UpdateHiddenCount()
+		end)
+	end
+
+	if FastModeEnabled then
+		task.defer(function()
+			ApplyFastMode()
+		end)
+	end
+end)
+
+local Switching=false
+
+local function SwitchServer()
+	if Switching then return end
+
+	Switching=true
+	sw.Text="SEARCHING..."
+
+	local ok,data=pcall(function()
+		return HttpService:JSONDecode(
+			game:HttpGet(
+				"https://games.roblox.com/v1/games/"
+				..PID..
+				"/servers/Public?sortOrder=Asc&limit=100"
+			)
+		)
+	end)
+
+	if ok and data and data.data then
+		for _,server in ipairs(data.data) do
+			if server.id~=JID
+			and server.playing<server.maxPlayers then
+
+				sw.Text="SWITCHING..."
+				sw.TextColor3=ON
+
+				TeleportService:TeleportToPlaceInstance(
+					PID,
+					server.id,
+					P
+				)
+
+				return
+			end
+		end
+	end
+
+	sw.Text="NO SERVER"
+
+	task.delay(1.5,function()
+		if sw.Parent then
+			sw.Text="SWITCH SERVER"
+			sw.TextColor3=GOLD
+		end
+
+		Switching=false
+	end)
+end
+
+sw.MouseButton1Click:Connect(SwitchServer)
+
+local Rejoining=false
+
+rj.MouseButton1Click:Connect(function()
+	if Rejoining then return end
+
+	Rejoining=true
+	rj.Text="REJOINING..."
+	rj.TextColor3=ON
+
+	task.wait(.2)
+
+	pcall(function()
+		TeleportService:TeleportToPlaceInstance(
+			PID,
+			JID,
+			P
+		)
+	end)
+
+	task.delay(3,function()
+		Rejoining=false
+
+		if rj.Parent then
+			rj.Text="REJOIN"
+			rj.TextColor3=GOLD
+		end
+	end)
+end)
+
+local Open=false
+
+local function OpenHub()
+	Open=true
+	Hub.Visible=true
+	HubScale.Scale=0
+
+	TweenService:Create(
+		HubScale,
+		TweenInfo.new(
+			.22,
+			Enum.EasingStyle.Back,
+			Enum.EasingDirection.Out
+		),
+		{Scale=1}
+	):Play()
+end
+
+local function CloseHub()
+	Open=false
+
+	TweenService:Create(
+		HubScale,
+		TweenInfo.new(
+			.16,
+			Enum.EasingStyle.Quad,
+			Enum.EasingDirection.In
+		),
+		{Scale=0}
+	):Play()
+
+	task.delay(.17,function()
+		if not Open then
+			Hub.Visible=false
+		end
+	end)
+end
+
+-- ✨ Launcher is now draggable
+local function MakeLauncherDraggable(o)
+	local dragging=false
+	local dragStart
+	local startPos
+
+	o.InputBegan:Connect(function(input)
+		if input.UserInputType==Enum.UserInputType.MouseButton1
+		or input.UserInputType==Enum.UserInputType.Touch then
+
+			dragging=true
+			dragStart=input.Position
+			startPos=o.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState==Enum.UserInputState.End then
+					dragging=false
+				end
+			end)
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if not dragging then return end
+
+		if input.UserInputType~=Enum.UserInputType.MouseMovement
+		and input.UserInputType~=Enum.UserInputType.Touch then
+			return
+		end
+
+		local delta=input.Position-dragStart
+
+		o.Position=UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset+delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset+delta.Y
+		)
+	end)
+end
+
+MakeLauncherDraggable(B)
+
+B.MouseButton1Click:Connect(function()
+	if Open then
+		CloseHub()
+	else
+		OpenHub()
+	end
+end)
+
+local function MakeDraggable(o)
+	local dragging=false
+	local dragStart
+	local startPos
+
+	o.InputBegan:Connect(function(input)
+		if input.UserInputType==Enum.UserInputType.MouseButton1
+		or input.UserInputType==Enum.UserInputType.Touch then
+
+			dragging=true
+			dragStart=input.Position
+			startPos=Hub.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState==Enum.UserInputState.End then
+					dragging=false
+				end
+			end)
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if not dragging then return end
+
+		if input.UserInputType~=Enum.UserInputType.MouseMovement
+		and input.UserInputType~=Enum.UserInputType.Touch then
+			return
+		end
+
+		local delta=input.Position-dragStart
+
+		Hub.Position=UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset+delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset+delta.Y
+		)
+	end)
+end
+
+MakeDraggable(F)
+MakeDraggable(back)
+MakeDraggable(eye)
+MakeDraggable(fastTab)
+
+sb.Text=tostring(CustomSpeed)
+ShowMain()
+
+print("Stelle Hub loaded successfully.")
