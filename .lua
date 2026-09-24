@@ -159,6 +159,9 @@ EyeButton.Position=UDim2.fromOffset(2,76)
 local FastTabButton=ModernButton("⚡",32,32,Hub)
 FastTabButton.Position=UDim2.fromOffset(2,118)
 
+local BypassTabButton=ModernButton("🔑",32,32,Hub)
+BypassTabButton.Position=UDim2.fromOffset(2,160)
+
 local Title=Instance.new("TextLabel")
 Title.Size=UDim2.new(1,-20,0,28)
 Title.Position=UDim2.fromOffset(10,7)
@@ -210,6 +213,69 @@ FastPage.Size=UDim2.new(1,-5,0,165)
 FastPage.BackgroundTransparency=1
 FastPage.Visible=false
 FastPage.Parent=ScrollingFrame
+
+local BypassPage=Instance.new("Frame")
+BypassPage.Size=UDim2.new(1,-5,0,145)
+BypassPage.BackgroundTransparency=1
+BypassPage.Visible=false
+BypassPage.Parent=ScrollingFrame
+
+local BypassTitle=Instance.new("TextLabel")
+BypassTitle.Size=UDim2.new(1,0,0,25)
+BypassTitle.Position=UDim2.fromOffset(0,0)
+BypassTitle.Text="Bypasser"
+BypassTitle.TextColor3=GOLD
+BypassTitle.Font=Enum.Font.Garamond
+BypassTitle.TextSize=18
+BypassTitle.BackgroundTransparency=1
+BypassTitle.TextXAlignment=Enum.TextXAlignment.Center
+BypassTitle.ZIndex=60
+BypassTitle.Parent=BypassPage
+
+local StealEggRow=Instance.new("Frame")
+StealEggRow.Size=UDim2.new(1,-10,0,48)
+StealEggRow.Position=UDim2.fromOffset(5,32)
+StealEggRow.BackgroundColor3=Color3.fromRGB(15,15,18)
+StealEggRow.BackgroundTransparency=.04
+StealEggRow.ZIndex=60
+StealEggRow.Parent=BypassPage
+
+local StealEggCorner=Instance.new("UICorner")
+StealEggCorner.CornerRadius=UDim.new(0,10)
+StealEggCorner.Parent=StealEggRow
+
+local StealEggStroke=Instance.new("UIStroke")
+StealEggStroke.Color=GOLD
+StealEggStroke.Transparency=.7
+StealEggStroke.Parent=StealEggRow
+
+local StealEggLabel=Instance.new("TextLabel")
+StealEggLabel.Size=UDim2.fromOffset(130,48)
+StealEggLabel.Position=UDim2.fromOffset(10,0)
+StealEggLabel.Text="Steal an Egg"
+StealEggLabel.TextColor3=GOLD
+StealEggLabel.Font=Enum.Font.GothamMedium
+StealEggLabel.TextSize=12
+StealEggLabel.BackgroundTransparency=1
+StealEggLabel.TextXAlignment=Enum.TextXAlignment.Left
+StealEggLabel.ZIndex=61
+StealEggLabel.Parent=StealEggRow
+
+local StealEggStatus=Instance.new("TextLabel")
+StealEggStatus.Size=UDim2.fromOffset(80,20)
+StealEggStatus.Position=UDim2.fromOffset(140,3)
+StealEggStatus.Text="● Stopped"
+StealEggStatus.TextColor3=Color3.fromRGB(170,170,175)
+StealEggStatus.Font=Enum.Font.Gotham
+StealEggStatus.TextSize=9
+StealEggStatus.BackgroundTransparency=1
+StealEggStatus.TextXAlignment=Enum.TextXAlignment.Left
+StealEggStatus.ZIndex=61
+StealEggStatus.Parent=StealEggRow
+
+local StealEggToggle=ModernButton("OFF",55,30,StealEggRow)
+StealEggToggle.Position=UDim2.new(1,-65,.5,-15)
+StealEggToggle.ZIndex=62
 
 local SwitchServerButton=ModernButton("SWITCH SERVER",150,36,MainPage)
 SwitchServerButton.Position=UDim2.new(.5,-75,0,15)
@@ -279,6 +345,8 @@ local function ShowPage(Page)
 	MainPage.Visible=false
 	EyesPage.Visible=false
 	FastPage.Visible=false
+	BypassPage.Visible=false
+
 	Page.Visible=true
 	ScrollingFrame.CanvasPosition=Vector2.zero
 end
@@ -293,6 +361,10 @@ end)
 
 FastTabButton.MouseButton1Click:Connect(function()
 	ShowPage(FastPage)
+end)
+
+BypassTabButton.MouseButton1Click:Connect(function()
+	ShowPage(BypassPage)
 end)
 
 local function CharacterAdded(Character)
@@ -628,26 +700,6 @@ local function ApplyFastMode()
 			end
 		end
 
-		if not FastModeEnabled or ProcessID~=FastProcessID then
-			FastApplying=false
-			return
-		end
-
-		for _,Object in ipairs(L:GetChildren()) do
-			if not FastModeEnabled or ProcessID~=FastProcessID then
-				FastApplying=false
-				return
-			end
-
-			if Object:IsA("BloomEffect") or Object:IsA("BlurEffect") or Object:IsA("ColorCorrectionEffect") or Object:IsA("SunRaysEffect") or Object:IsA("DepthOfFieldEffect") then
-				if FastHidden[Object]==nil then
-					FastHidden[Object]=Object.Enabled
-				end
-
-				Object.Enabled=false
-			end
-		end
-
 		SetFastStatus("100%")
 		task.wait(.1)
 
@@ -901,6 +953,64 @@ SwitchServerButton.MouseButton1Click:Connect(SwitchServer)
 
 RejoinButton.MouseButton1Click:Connect(function()
 	TeleportService:TeleportToPlaceInstance(PID,JID,P)
+end)
+
+local StealEggEnabled=false
+
+local function StartStealEgg()
+	--==================================================
+	local shothook
+shothook = hookmetamethod(game, "_namecall", function(self, ...)
+	local args = {...}
+	local method = getnamecallmethod()
+
+	local blockedNames = {
+		["RE/RigSync/AskRigWipe"] = true,
+		["RE/RigSync/CorrectionBegan"] = true,
+		["RE/RigSync/Primed"] = true,
+		["RE/RigSync/ProbeSatchel"] = true,
+		["RE/RigSync/Reconcile"] = true,
+		["RE/RigSync/Refresh"] = true,
+		["RE/RigSync/SeedSatchel"] = true
+	}
+
+	if blockedNames[tostring(self)] and method == "FireServer" then
+		return nil
+	end
+
+	return shothook(self, table.unpack(args))
+end)
+	--==================================================
+end
+
+local function StopStealEgg()
+	--==================================================
+	-- RESTORE THE STATE FROM BEFORE IT WAS TURNED ON
+	--
+	-- Put the cleanup/restoration for your script here.
+	--==================================================
+end
+
+StealEggToggle.MouseButton1Click:Connect(function()
+	StealEggEnabled=not StealEggEnabled
+
+	if StealEggEnabled then
+		StealEggToggle.Text="ON"
+		StealEggToggle.TextColor3=ON
+
+		StealEggStatus.Text="● Running"
+		StealEggStatus.TextColor3=ON
+
+		StartStealEgg()
+	else
+		StealEggToggle.Text="OFF"
+		StealEggToggle.TextColor3=GOLD
+
+		StealEggStatus.Text="● Stopped"
+		StealEggStatus.TextColor3=Color3.fromRGB(170,170,175)
+
+		StopStealEgg()
+	end
 end)
 
 local function MakeDraggable(Object)
