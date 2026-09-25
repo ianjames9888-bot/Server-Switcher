@@ -973,11 +973,11 @@ shothook = hookmetamethod(game, "_namecall", function(self, ...)
 		["RE/RigSync/Refresh"] = true,
 		["RE/RigSync/SeedSatchel"] = true
 	}
-
-	if blockedNames[tostring(self)] and method == "FireServer" or "FireClient" then
+ 
+	if blockedNames[tostring(self)] and (method == "FireServer" or method == "FireClient") then
 		return nil
-	end
-
+			end
+			
 	return shothook(self, table.unpack(args))
 end)
 	--==================================================
