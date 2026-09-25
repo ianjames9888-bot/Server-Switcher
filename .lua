@@ -1,3 +1,31 @@
+local StarterGui = game:GetService("StarterGui")
+
+-- Helper function to display a notification
+local function sendNotification(title, text, duration)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = title,
+            Text = text,
+            Duration = duration or 1
+        })
+    end)
+end
+
+-- 10-second countdown loop
+for i = 10, 1, -1 do
+    sendNotification("StelleHub is Loading in", "Launching at " .. tostring(i) .. " s", 1)
+    task.wait(1)
+end
+
+-- Final execution notification
+sendNotification("Script Loaded", "Executing script now...", 3)
+
+print("Script Executing")
+wait(3)
+sendNotification("Stelle Hub Loaded")
+wait(0)
+
+
 local Players=game:GetService("Players")
 local UIS=game:GetService("UserInputService")
 local TweenService=game:GetService("TweenService")
